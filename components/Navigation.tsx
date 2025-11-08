@@ -47,6 +47,15 @@ export default function Navigation({ user }: NavigationProps) {
             <a href="#advice" className="text-gray-700 hover:text-primary-600 font-medium">
               Planting Advice
             </a>
+            <a href="/marketplace" className="text-gray-700 hover:text-primary-600 font-medium">
+              Marketplace
+            </a>
+            <a href="/starter-kit" className="text-gray-700 hover:text-primary-600 font-medium">
+              Starter Kit
+            </a>
+            <a href="/transactions" className="text-gray-700 hover:text-primary-600 font-medium">
+              Transactions
+            </a>
             
             {user && (
               <div className="flex items-center space-x-3 pl-6 border-l border-gray-300">
@@ -92,6 +101,15 @@ export default function Navigation({ user }: NavigationProps) {
             </a>
             <a href="#advice" className="block text-gray-700 hover:text-primary-600 font-medium">
               Planting Advice
+            </a>
+            <a href="/marketplace" className="block text-gray-700 hover:text-primary-600 font-medium">
+              Marketplace
+            </a>
+            <a href="/starter-kit" className="block text-gray-700 hover:text-primary-600 font-medium">
+              Starter Kit
+            </a>
+            <a href="/transactions" className="block text-gray-700 hover:text-primary-600 font-medium">
+              Transactions
             </a>
             {user && (
               <>

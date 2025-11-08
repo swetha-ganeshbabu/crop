@@ -49,38 +49,53 @@ export default function VoiceAssistant() {
   const speakWithElevenLabs = useCallback(async (text: string) => {
     setIsSpeaking(true)
     try {
-      // ElevenLabs API integration
-      // For hackathon demo, we'll use Web Speech API as fallback
-      // In production, you would use:
-      /*
-      const response = await fetch('https://api.elevenlabs.io/v1/text-to-speech/YOUR_VOICE_ID', {
+      // Try ElevenLabs API first (via our API route)
+      const response = await fetch('/api/elevenlabs-tts', {
         method: 'POST',
         headers: {
-          'Accept': 'audio/mpeg',
           'Content-Type': 'application/json',
-          'xi-api-key': 'YOUR_ELEVENLABS_API_KEY',
         },
         body: JSON.stringify({
           text: text,
-          model_id: 'eleven_monolingual_v1',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-          },
+          voice_id: '21m00Tcm4TlvDq8ikWAM', // Rachel voice - natural and clear
         }),
       })
 
       if (response.ok) {
-        const audioBlob = await response.blob()
-        const audioUrl = URL.createObjectURL(audioBlob)
-        const audio = new Audio(audioUrl)
-        audio.play()
-        audio.onended = () => setIsSpeaking(false)
+        const contentType = response.headers.get('content-type')
+        
+        // If we got audio (ElevenLabs worked)
+        if (contentType && contentType.includes('audio')) {
+          const audioBlob = await response.blob()
+          const audioUrl = URL.createObjectURL(audioBlob)
+          const audio = new Audio(audioUrl)
+          
+          audio.onended = () => {
+            URL.revokeObjectURL(audioUrl)
+            setIsSpeaking(false)
+          }
+          
+          audio.onerror = () => {
+            console.error('Audio playback error')
+            setIsSpeaking(false)
+          }
+          
+          await audio.play()
+          return // Success - exit early
+        }
+        
+        // If not audio, it's a JSON response (API key not set)
+        const data = await response.json()
+        if (!data.success) {
+          console.log('ElevenLabs not available, using Web Speech API fallback')
+        }
       }
-      */
 
-      // Fallback to Web Speech API for demo
+      // Fallback to Web Speech API if ElevenLabs is not available
       if ('speechSynthesis' in window) {
+        // Cancel any ongoing speech
+        window.speechSynthesis.cancel()
+        
         const utterance = new SpeechSynthesisUtterance(text)
         utterance.rate = 0.9
         utterance.pitch = 1
@@ -90,13 +105,28 @@ export default function VoiceAssistant() {
           setIsSpeaking(false)
         }
         
+        utterance.onerror = () => {
+          console.error('Speech synthesis error')
+          setIsSpeaking(false)
+        }
+        
         window.speechSynthesis.speak(utterance)
       } else {
         setIsSpeaking(false)
       }
     } catch (error) {
       console.error('Error with ElevenLabs:', error)
-      setIsSpeaking(false)
+      // Fallback to Web Speech API
+      if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text)
+        utterance.rate = 0.9
+        utterance.pitch = 1
+        utterance.volume = 1
+        utterance.onend = () => setIsSpeaking(false)
+        window.speechSynthesis.speak(utterance)
+      } else {
+        setIsSpeaking(false)
+      }
     }
   }, [])
 

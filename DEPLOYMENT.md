@@ -25,8 +25,10 @@ Vercel is the recommended platform for Next.js applications:
 
 3. **Environment Variables** (if needed):
    - `DEDALUS_API_KEY` - For Dedalus Labs AI integration (optional, has fallback)
-   - `ELEVENLABS_API_KEY` - For ElevenLabs voice synthesis (optional)
+   - `ELEVENLABS_API_KEY` - For ElevenLabs natural voice synthesis (optional, has fallback)
    - `KNOT_API_KEY` - Already configured in code (hackathon credentials)
+   
+   **Note**: Both Dedalus and ElevenLabs have smart fallbacks, so the app works without these keys!
 
 ### 2. Netlify
 
@@ -116,9 +118,9 @@ CMD ["node", "server.js"]
 
 The application works without environment variables (uses mock data), but for production:
 
-- **Dedalus API Key** (optional): For enhanced AI responses via Dedalus Labs
-- **ElevenLabs API Key** (optional): For voice synthesis
-- **Knot API Key**: Already configured in code for hackathon
+- **DEDALUS_API_KEY** (optional): For enhanced AI responses via Dedalus Labs - has smart fallback
+- **ELEVENLABS_API_KEY** (optional): For natural voice synthesis via ElevenLabs - has Web Speech API fallback
+- **KNOT_API_KEY**: Already configured in code for hackathon
 
 ## 🌐 Post-Deployment
 
