@@ -51,7 +51,13 @@ export async function POST(request: Request) {
     let phoneNumber: string | undefined
     
     // Try different formats
-    if (body.message) {
+    if (body.message?.text) {
+      // Photon webhook format: {event: "new_message", message: {text: "...", sender: "..."}}
+      message = body.message.text
+      userId = body.message.sender || body.message.senderName || body.userId
+      phoneNumber = body.message.sender
+    } else if (body.message && typeof body.message === 'string') {
+      // Simple format: {message: "..."}
       message = body.message
       userId = body.userId || body.user
       phoneNumber = body.phoneNumber || body.phone
