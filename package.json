@@ -9,8 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "prebuild": "npm run lint",
-    "check-all": "npm run lint && npm run build",
-    "photon": "npx tsx photon-integration.ts"
+    "check-all": "npm run lint && npm run build"
   },
   "dependencies": {
     "@photon-ai/imessage-kit": "^1.1.3",
