@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { LogIn, User, Lock, Mail, UserPlus } from 'lucide-react'
+import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -74,15 +75,43 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 flex items-center justify-center p-4" style={{ pointerEvents: 'auto' }}>
-      <div className="max-w-md w-full" style={{ pointerEvents: 'auto' }}>
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{ pointerEvents: 'auto' }}>
+      {/* Background Image with Overlay */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/background.png"
+          alt="Background"
+          fill
+          className="object-cover blur-sm"
+          priority
+          quality={90}
+        />
+        {/* Gradient overlay to enhance green and brown tones */}
+        <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-gradient-to-l from-amber-700/20 via-transparent to-transparent"></div>
+        {/* Light overlay for readability */}
+        <div className="absolute inset-0 bg-white/30"></div>
+      </div>
+
+      <div className="max-w-md w-full relative z-10" style={{ pointerEvents: 'auto' }}>
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-600 rounded-full mb-4">
-            <User className="h-8 w-8 text-white" />
+          <div className="flex justify-center mb-4">
+            <div className="bg-white/95 backdrop-blur-md px-6 py-4 rounded-xl shadow-2xl border-2 border-green-100">
+              <Image
+                src="/logo.svg"
+                alt="Cropit Logo"
+                width={180}
+                height={74}
+                className="h-16 w-auto"
+                priority
+              />
+            </div>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Regenerative Farm OS</h1>
-          <p className="text-gray-600">Your sustainable farming dashboard</p>
+          <div className="bg-white/95 backdrop-blur-md px-8 py-4 rounded-xl shadow-2xl border-2 border-green-100 inline-block">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 drop-shadow-lg">Regenerative Farm OS</h1>
+            <p className="text-gray-700 font-medium">Your sustainable farming dashboard</p>
+          </div>
         </div>
 
         {/* Auth Card */}

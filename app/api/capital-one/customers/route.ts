@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     const { firstName, lastName, streetNumber, streetName, city, state, zip, email } = body
 
     const CAPITAL_ONE_API_KEY = process.env.CAPITAL_ONE_API_KEY || ''
-    const NESSIE_API_BASE = 'http://api.reimaginebanking.com'
+    const NESSIE_API_BASE = 'http://api.nessieisreal.com'
 
     if (!CAPITAL_ONE_API_KEY) {
       return NextResponse.json({
@@ -90,7 +90,7 @@ export async function GET(request: Request) {
       }, { status: 400 })
     }
 
-    const NESSIE_API_BASE = 'http://api.reimaginebanking.com'
+    const NESSIE_API_BASE = 'http://api.nessieisreal.com'
     const url = `${NESSIE_API_BASE}/customers/${customerId}?key=${CAPITAL_ONE_API_KEY}`
 
     try {

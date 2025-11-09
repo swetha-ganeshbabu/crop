@@ -155,12 +155,12 @@ export default function CropYieldPrediction({ onReadAloud }: CropYieldPrediction
 
       {/* Recommendations */}
       {(predictions.recommendations || predictions.crops?.[0]?.recommendations) && (
-        <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+        <div className="mt-6 bg-emerald-50 border-l-4 border-emerald-400 p-4 rounded">
           <div className="flex items-start space-x-2">
-            <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-emerald-600 mt-0.5" />
             <div>
-              <p className="font-semibold text-blue-800">Chestnut Forty Recommendations</p>
-              <ul className="text-sm text-blue-700 mt-1 list-disc list-inside space-y-1">
+              <p className="font-semibold text-emerald-800">Chestnut Forty Recommendations</p>
+              <ul className="text-sm text-emerald-700 mt-1 list-disc list-inside space-y-1">
                 {(predictions.recommendations || predictions.crops?.[0]?.recommendations || []).map((rec: string, idx: number) => (
                   <li key={idx}>{rec}</li>
                 ))}
@@ -191,12 +191,12 @@ export default function CropYieldPrediction({ onReadAloud }: CropYieldPrediction
 
       {/* AI Recommendation (Fallback) */}
       {!predictions.recommendations && !predictions.comparison && (
-        <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+        <div className="mt-6 bg-emerald-50 border-l-4 border-emerald-400 p-4 rounded">
           <div className="flex items-start space-x-2">
-            <AlertTriangle className="h-5 w-5 text-blue-600 mt-0.5" />
+            <AlertTriangle className="h-5 w-5 text-emerald-600 mt-0.5" />
             <div>
-              <p className="font-semibold text-blue-800">AI Recommendation</p>
-              <p className="text-sm text-blue-700 mt-1">
+              <p className="font-semibold text-emerald-800">AI Recommendation</p>
+              <p className="text-sm text-emerald-700 mt-1">
                 Based on current conditions, your corn fields show excellent growth potential. 
                 Consider applying additional nitrogen fertilizer in the next 2 weeks to maximize yield.
               </p>

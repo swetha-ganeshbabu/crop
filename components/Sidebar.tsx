@@ -12,6 +12,7 @@ import {
   Menu,
   X
 } from 'lucide-react'
+import Image from 'next/image'
 
 interface SidebarContextType {
   isOpen: boolean
@@ -99,11 +100,15 @@ export default function Sidebar({ onSectionClick, children }: SidebarProps) {
         {/* Toggle Button */}
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
           {isOpen && (
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">FW</span>
-              </div>
-              <span className="font-bold text-gray-800">FarmWise</span>
+            <div className="flex items-center">
+              <Image 
+                src="/logo.svg" 
+                alt="Cropit Logo" 
+                width={120} 
+                height={49}
+                className="h-8 w-auto"
+                priority
+              />
             </div>
           )}
           <button

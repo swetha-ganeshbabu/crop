@@ -1,8 +1,9 @@
 'use client'
 
-import { Sprout, Menu, X, LogOut, User } from 'lucide-react'
+import { Menu, X, LogOut, User } from 'lucide-react'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 interface NavigationProps {
   user?: {
@@ -40,9 +41,15 @@ export default function Navigation({ user, onSectionClick }: NavigationProps) {
     <nav className="bg-white shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-2">
-            <Sprout className="h-8 w-8 text-primary-600" />
-            <span className="text-2xl font-bold text-gray-800">FarmWise</span>
+          <div className="flex items-center">
+            <Image 
+              src="/logo.svg" 
+              alt="Cropit Logo" 
+              width={120} 
+              height={49}
+              className="h-12 w-auto"
+              priority
+            />
           </div>
           
           <div className="hidden md:flex items-center space-x-6">

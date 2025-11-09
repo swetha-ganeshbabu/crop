@@ -46,7 +46,7 @@ export default function SoilHealth({ onReadAloud }: SoilHealthProps = {}) {
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       excellent: 'bg-green-100 text-green-800 border-green-300',
-      good: 'bg-blue-100 text-blue-800 border-blue-300',
+      good: 'bg-emerald-100 text-emerald-800 border-emerald-300',
       fair: 'bg-yellow-100 text-yellow-800 border-yellow-300',
       poor: 'bg-red-100 text-red-800 border-red-300',
     }
@@ -122,7 +122,7 @@ export default function SoilHealth({ onReadAloud }: SoilHealthProps = {}) {
               <div
                 className={`h-2 rounded-full ${
                   metric.status === 'excellent' ? 'bg-green-500' :
-                  metric.status === 'good' ? 'bg-blue-500' :
+                  metric.status === 'good' ? 'bg-emerald-500' :
                   metric.status === 'fair' ? 'bg-yellow-500' : 'bg-red-500'
                 }`}
                 style={{ width: `${Math.min((metric.value / metric.optimal) * 100, 100)}%` }}

@@ -279,6 +279,7 @@ export default function SpendingTracker() {
             sessionId,
             clientId: KNOT_CONFIG.CLIENT_ID,
             environment: KNOT_CONFIG.ENVIRONMENT,
+            product: 'transaction_link',
           })
           
           // Open Knot SDK modal
@@ -287,6 +288,9 @@ export default function SpendingTracker() {
             clientId: KNOT_CONFIG.CLIENT_ID,
             environment: KNOT_CONFIG.ENVIRONMENT,
             product: 'transaction_link',
+            mode: 'ui', // Explicitly set UI mode
+            useCategories: true,
+            useSearch: true,
             onSuccess: (product: string, merchant: string) => {
               console.log('Knot account linked successfully:', { product, merchant })
               
@@ -310,8 +314,35 @@ export default function SpendingTracker() {
               setLoading(false)
             },
             onError: (product: string, errorCode: string, message: string, payload: any) => {
-              console.error('Knot SDK error:', { product, errorCode, message, payload })
-              setError(`Failed to link account: ${message || errorCode}. Please try again.`)
+              console.error('Knot SDK error details:', { 
+                product, 
+                errorCode, 
+                message, 
+                payload,
+                sessionId,
+                clientId: KNOT_CONFIG.CLIENT_ID,
+                environment: KNOT_CONFIG.ENVIRONMENT,
+              })
+              
+              // Provide more helpful error messages
+              let errorMessage = 'Failed to link account. '
+              
+              // Check for cross-origin/security errors
+              if (message && (message.includes('SecurityError') || message.includes('cross-origin') || message.includes('Blocked a frame'))) {
+                errorMessage += 'Cross-origin security error. Your domain may need to be allowlisted in Knot dashboard. For demo, you can use mock data.'
+              } else if (errorCode === 'INVALID_SESSION' || errorCode === 'EXPIRED_SESSION') {
+                errorMessage += 'Session expired. Please try again.'
+              } else if (errorCode === 'INVALID_CLIENT_ID') {
+                errorMessage += 'Invalid client ID. Please check configuration.'
+              } else if (message) {
+                errorMessage += message
+              } else if (errorCode) {
+                errorMessage += `Error: ${errorCode}`
+              } else {
+                errorMessage += 'Something went wrong. Please try again in a few minutes.'
+              }
+              
+              setError(errorMessage)
               setLoading(false)
             },
             onExit: (product: string) => {
@@ -349,10 +380,10 @@ export default function SpendingTracker() {
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
-      fertilizer: 'bg-red-100 text-red-800 border-red-300',
-      seeds: 'bg-blue-100 text-blue-800 border-blue-300',
-      equipment: 'bg-purple-100 text-purple-800 border-purple-300',
-      fuel: 'bg-orange-100 text-orange-800 border-orange-300',
+      fertilizer: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+      seeds: 'bg-teal-100 text-teal-800 border-teal-300',
+      equipment: 'bg-green-100 text-green-800 border-green-300',
+      fuel: 'bg-emerald-100 text-emerald-800 border-emerald-300',
       pesticides: 'bg-yellow-100 text-yellow-800 border-yellow-300',
       other: 'bg-gray-100 text-gray-800 border-gray-300',
     }
@@ -385,7 +416,7 @@ export default function SpendingTracker() {
             <button
               onClick={handleConnectKnot}
               disabled={loading}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Link2 className="h-4 w-4" />
               <span>{loading ? 'Connecting...' : 'Connect Knot Account'}</span>
@@ -395,9 +426,9 @@ export default function SpendingTracker() {
       </div>
 
       {/* Knot Logo & Integration Badge - Visual Representation Required */}
-      <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-l-4 border-blue-500">
+      <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border-l-4 border-emerald-500">
         <div className="flex items-center space-x-3">
-          <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-lg shadow-md">
+          <div className="bg-green-600 text-white px-4 py-2 rounded-lg font-bold text-lg shadow-md">
             KNOT
           </div>
           <div className="flex-1">
@@ -412,7 +443,7 @@ export default function SpendingTracker() {
             ) : (
               <>
                 <p className="text-xs text-gray-600">Connect your account to sync real transactions with SKU data</p>
-                <p className="text-xs text-blue-600 mt-1 font-medium">📊 Currently showing demo data</p>
+                <p className="text-xs text-emerald-600 mt-1 font-medium">📊 Currently showing demo data</p>
               </>
             )}
           </div>
@@ -428,8 +459,8 @@ export default function SpendingTracker() {
 
       {/* Loading State */}
       {loading && (
-        <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
-          <p className="text-sm text-blue-800">Loading transactions...</p>
+        <div className="mb-4 p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-lg">
+          <p className="text-sm text-emerald-800">Loading transactions...</p>
         </div>
       )}
 
@@ -504,7 +535,7 @@ export default function SpendingTracker() {
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-700">Recent Transactions</h3>
-              <span className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-1 rounded">
+              <span className="text-xs text-emerald-600 font-medium bg-emerald-50 px-2 py-1 rounded">
                 SKU Data Included
               </span>
             </div>
@@ -519,8 +550,8 @@ export default function SpendingTracker() {
                       </span>
                     </div>
                     {txn.sku && (
-                      <div className="bg-blue-50 border border-blue-200 rounded px-2 py-1 mt-1 mb-1">
-                        <p className="text-xs font-semibold text-blue-800">SKU: <span className="font-mono">{txn.sku}</span></p>
+                      <div className="bg-emerald-50 border border-emerald-200 rounded px-2 py-1 mt-1 mb-1">
+                        <p className="text-xs font-semibold text-emerald-800">SKU: <span className="font-mono">{txn.sku}</span></p>
                       </div>
                     )}
                     <p className="text-xs text-gray-400">{new Date(txn.date).toLocaleDateString()}</p>
@@ -535,14 +566,14 @@ export default function SpendingTracker() {
           </div>
 
           {/* Recommendations */}
-          <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
-            <h3 className="font-semibold text-blue-800 mb-3 flex items-center">
+          <div className="bg-emerald-50 border-l-4 border-emerald-400 p-4 rounded">
+            <h3 className="font-semibold text-emerald-800 mb-3 flex items-center">
               <AlertTriangle className="h-5 w-5 mr-2" />
               Profitability Recommendations
             </h3>
             <ul className="space-y-2">
               {analysis.recommendations.map((rec, index) => (
-                <li key={index} className="text-sm text-blue-700 flex items-start">
+                <li key={index} className="text-sm text-emerald-700 flex items-start">
                   <span className="mr-2">•</span>
                   <span>{rec}</span>
                 </li>

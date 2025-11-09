@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Volume2, VolumeX, Loader2, Sparkles, ArrowRight, ExternalLink } from 'lucide-react'
 
 interface InsightModalProps {
@@ -35,18 +35,47 @@ export default function InsightModal({ isOpen, onClose, section, content, contex
   const [loading, setLoading] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const audioRef = useRef<HTMLAudioElement | null>(null)
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
 
   useEffect(() => {
     if (isOpen && content) {
       fetchInsights()
     } else {
       setInsights(null)
+      // Stop any playing audio when modal closes
+      if (audioRef.current) {
+        try {
+          audioRef.current.pause()
+          audioRef.current.currentTime = 0
+          audioRef.current.src = ''
+          audioRef.current.load()
+        } catch (error) {
+          console.error('Error stopping audio on close:', error)
+        }
+        audioRef.current = null
+      }
       if (audioUrl) {
-        URL.revokeObjectURL(audioUrl)
+        try {
+          URL.revokeObjectURL(audioUrl)
+        } catch (error) {
+          console.error('Error revoking URL on close:', error)
+        }
         setAudioUrl(null)
       }
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel()
+        } catch (error) {
+          console.error('Error canceling speech on close:', error)
+        }
+      }
+      if (utteranceRef.current) {
+        utteranceRef.current = null
+      }
+      setIsSpeaking(false)
     }
-  }, [isOpen, section])
+  }, [isOpen, section, audioUrl])
 
   const fetchInsights = async () => {
     setLoading(true)
@@ -97,15 +126,20 @@ export default function InsightModal({ isOpen, onClose, section, content, contex
           const url = URL.createObjectURL(audioBlob)
           setAudioUrl(url)
           const audio = new Audio(url)
+          audioRef.current = audio
           
           audio.onended = () => {
             setIsSpeaking(false)
             URL.revokeObjectURL(url)
             setAudioUrl(null)
+            audioRef.current = null
           }
           
           audio.onerror = () => {
             setIsSpeaking(false)
+            URL.revokeObjectURL(url)
+            setAudioUrl(null)
+            audioRef.current = null
           }
           
           await audio.play()
@@ -117,11 +151,18 @@ export default function InsightModal({ isOpen, onClose, section, content, contex
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel()
         const utterance = new SpeechSynthesisUtterance(textToSpeak)
+        utteranceRef.current = utterance
         utterance.rate = 0.9
         utterance.pitch = 1
         utterance.volume = 1
-        utterance.onend = () => setIsSpeaking(false)
-        utterance.onerror = () => setIsSpeaking(false)
+        utterance.onend = () => {
+          setIsSpeaking(false)
+          utteranceRef.current = null
+        }
+        utterance.onerror = () => {
+          setIsSpeaking(false)
+          utteranceRef.current = null
+        }
         window.speechSynthesis.speak(utterance)
       } else {
         setIsSpeaking(false)
@@ -133,12 +174,47 @@ export default function InsightModal({ isOpen, onClose, section, content, contex
   }
 
   const stopSpeaking = () => {
+    console.log('Stop speaking called', { audioRef: audioRef.current, audioUrl, isSpeaking })
+    
+    // Stop ElevenLabs audio if playing
+    if (audioRef.current) {
+      try {
+        audioRef.current.pause()
+        audioRef.current.currentTime = 0
+        audioRef.current.src = '' // Clear the source
+        audioRef.current.load() // Reset the audio element
+        // Remove event listeners
+        audioRef.current.onended = null
+        audioRef.current.onerror = null
+      } catch (error) {
+        console.error('Error stopping audio:', error)
+      }
+      audioRef.current = null
+    }
+    
+    // Clean up audio URL
     if (audioUrl) {
-      // Audio element will be cleaned up by onended
+      try {
+        URL.revokeObjectURL(audioUrl)
+      } catch (error) {
+        console.error('Error revoking URL:', error)
+      }
+      setAudioUrl(null)
     }
+    
+    // Stop Web Speech API if using fallback
     if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
+      try {
+        window.speechSynthesis.cancel()
+        // Also remove any pending utterances
+        if (utteranceRef.current) {
+          utteranceRef.current = null
+        }
+      } catch (error) {
+        console.error('Error canceling speech synthesis:', error)
+      }
     }
+    
     setIsSpeaking(false)
   }
 
@@ -228,11 +304,11 @@ export default function InsightModal({ isOpen, onClose, section, content, contex
           ) : insights ? (
             <div className="space-y-6">
               {/* Summary */}
-              <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-                <h3 className="font-semibold text-blue-800 mb-2">Summary</h3>
-                <p className="text-blue-700">{insights.summary}</p>
+              <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded">
+                <h3 className="font-semibold text-emerald-800 mb-2">Summary</h3>
+                <p className="text-emerald-700">{insights.summary}</p>
                 {insights.source && (
-                  <p className="text-xs text-blue-600 mt-2">Powered by {insights.source}</p>
+                  <p className="text-xs text-emerald-600 mt-2">Powered by {insights.source}</p>
                 )}
               </div>
 
@@ -264,13 +340,20 @@ export default function InsightModal({ isOpen, onClose, section, content, contex
               {/* Read Aloud Button */}
               <div className="pt-4 border-t">
                 <button
-                  onClick={isSpeaking ? stopSpeaking : speakInsights}
-                  disabled={isSpeaking}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    if (isSpeaking) {
+                      stopSpeaking()
+                    } else {
+                      speakInsights()
+                    }
+                  }}
                   className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center space-x-2 mb-3 ${
                     isSpeaking
-                      ? 'bg-red-600 text-white hover:bg-red-700'
-                      : 'bg-green-600 text-white hover:bg-green-700'
-                  } disabled:opacity-50`}
+                      ? 'bg-red-600 text-white hover:bg-red-700 cursor-pointer'
+                      : 'bg-green-600 text-white hover:bg-green-700 cursor-pointer'
+                  }`}
                 >
                   {isSpeaking ? (
                     <>

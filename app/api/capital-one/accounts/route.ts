@@ -10,7 +10,7 @@ export async function POST(request: Request) {
 
     // Get API key from environment
     const CAPITAL_ONE_API_KEY = process.env.CAPITAL_ONE_API_KEY || ''
-    const NESSIE_API_BASE = 'http://api.reimaginebanking.com'
+    const NESSIE_API_BASE = 'http://api.nessieisreal.com'
 
     if (!CAPITAL_ONE_API_KEY) {
       return NextResponse.json({
@@ -42,9 +42,12 @@ export async function POST(request: Request) {
 
         if (response.ok) {
           const data = await response.json()
+          // Extract account ID from Capital One response structure
+          const accountId = data.objectCreated?._id || data._id || data.account?._id
           return NextResponse.json({
             success: true,
-            account: data,
+            account: data.objectCreated || data,
+            accountId: accountId,
             message: accountType === 'Loan' 
               ? `Loan account created successfully. Loan amount: $${loanAmount}`
               : 'Account created successfully',
@@ -94,7 +97,7 @@ export async function GET(request: Request) {
       }, { status: 400 })
     }
 
-    const NESSIE_API_BASE = 'http://api.reimaginebanking.com'
+    const NESSIE_API_BASE = 'http://api.nessieisreal.com'
     const url = `${NESSIE_API_BASE}/customers/${customerId}/accounts?key=${CAPITAL_ONE_API_KEY}`
 
     try {

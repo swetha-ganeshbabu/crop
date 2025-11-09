@@ -205,8 +205,8 @@ export default function AerialFarmMap({ onReadAloud }: AerialFarmMapProps = {}) 
                 <div className="absolute bottom-2 right-2 bg-white/80 backdrop-blur-sm rounded px-2 py-1">
                   <div className="flex items-center space-x-1">
                     <Droplets className={`h-3 w-3 ${
-                      field.moistureLevel === 'optimal' ? 'text-blue-600' :
-                      field.moistureLevel === 'adequate' ? 'text-blue-400' :
+                      field.moistureLevel === 'optimal' ? 'text-emerald-600' :
+                      field.moistureLevel === 'adequate' ? 'text-teal-600' :
                       field.moistureLevel === 'low' ? 'text-yellow-600' : 'text-red-600'
                     }`} />
                     <span className="text-xs font-semibold text-gray-700">{field.moisture}%</span>
@@ -287,8 +287,8 @@ export default function AerialFarmMap({ onReadAloud }: AerialFarmMapProps = {}) 
                   <td className="py-3 px-4">
                     <div className="flex items-center space-x-2">
                       <Droplets className={`h-4 w-4 ${
-                        field.moistureLevel === 'optimal' ? 'text-blue-600' :
-                        field.moistureLevel === 'adequate' ? 'text-blue-400' :
+                        field.moistureLevel === 'optimal' ? 'text-emerald-600' :
+                        field.moistureLevel === 'adequate' ? 'text-teal-600' :
                         field.moistureLevel === 'low' ? 'text-yellow-600' : 'text-red-600'
                       }`} />
                       <span className={`text-sm font-medium ${
@@ -305,7 +305,7 @@ export default function AerialFarmMap({ onReadAloud }: AerialFarmMapProps = {}) 
                   <td className="py-3 px-4">
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       field.moistureLevel === 'optimal' ? 'bg-green-100 text-green-800' :
-                      field.moistureLevel === 'adequate' ? 'bg-blue-100 text-blue-800' :
+                      field.moistureLevel === 'adequate' ? 'bg-teal-100 text-teal-800' :
                       field.moistureLevel === 'low' ? 'bg-yellow-100 text-yellow-800' :
                       'bg-red-100 text-red-800'
                     }`}>
@@ -316,7 +316,7 @@ export default function AerialFarmMap({ onReadAloud }: AerialFarmMapProps = {}) 
                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                       field.irrigationNeeded
                         ? 'bg-red-100 text-red-800 border border-red-300 font-bold animate-pulse'
-                        : 'bg-blue-100 text-blue-800 border border-blue-300'
+                        : 'bg-teal-100 text-teal-800 border border-teal-300'
                     }`}>
                       {field.nextAction}
                       {field.daysUntilAction > 0 && (

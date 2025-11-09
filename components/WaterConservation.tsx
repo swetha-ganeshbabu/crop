@@ -34,11 +34,11 @@ export default function WaterConservation() {
           <h2 className="text-xl font-bold text-gray-800">Water Conservation</h2>
           <p className="text-sm text-gray-600 mt-1">Drought resilience through regenerative practices</p>
         </div>
-        <Droplets className="h-6 w-6 text-cyan-600" />
+        <Droplets className="h-6 w-6 text-teal-600" />
       </div>
 
       {/* Water Savings Hero */}
-      <div className="bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg p-6 mb-6 text-white">
+      <div className="bg-gradient-to-r from-teal-500 to-emerald-600 rounded-lg p-6 mb-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-sm opacity-90 mb-1">Total Water Saved This Year</p>
@@ -54,15 +54,15 @@ export default function WaterConservation() {
       </div>
 
       {/* Water Infiltration Rate */}
-      <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+      <div className="mb-6 p-4 bg-teal-50 border-l-4 border-teal-500 rounded-lg">
         <div className="flex items-center space-x-2 mb-3">
-          <Waves className="h-5 w-5 text-blue-600" />
+          <Waves className="h-5 w-5 text-teal-600" />
           <h3 className="font-semibold text-gray-800">Water Infiltration Rate</h3>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <p className="text-xs text-gray-600 mb-1">Your Farm</p>
-            <p className="text-2xl font-bold text-blue-600">{waterData.infiltrationRate}</p>
+            <p className="text-2xl font-bold text-teal-600">{waterData.infiltrationRate}</p>
             <p className="text-xs text-gray-500">inches/hour</p>
           </div>
           <div>
@@ -72,7 +72,7 @@ export default function WaterConservation() {
           </div>
         </div>
         <div className="mt-3 bg-white rounded p-2">
-          <p className="text-xs text-blue-700">
+          <p className="text-xs text-teal-700">
             💧 Your soil can absorb <span className="font-bold">{waterData.infiltrationRate / waterData.conventionalRate}x more</span> water per hour. 
             This means you can capture heavy rainfall that would otherwise run off.
           </p>
@@ -107,21 +107,21 @@ export default function WaterConservation() {
 
       {/* Conservation Metrics */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-cyan-50 rounded-lg p-4 border border-cyan-200">
+        <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
           <div className="flex items-center space-x-2 mb-2">
-            <CloudRain className="h-4 w-4 text-cyan-600" />
+            <CloudRain className="h-4 w-4 text-teal-600" />
             <span className="text-xs text-gray-600">Rainwater Captured</span>
           </div>
-          <p className="text-xl font-bold text-cyan-600">{(waterData.conservation.rainwaterCaptured / 1000).toFixed(0)}K</p>
+          <p className="text-xl font-bold text-teal-600">{(waterData.conservation.rainwaterCaptured / 1000).toFixed(0)}K</p>
           <p className="text-xs text-gray-500">gallons this season</p>
         </div>
 
-        <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+        <div className="bg-emerald-50 rounded-lg p-4 border border-emerald-200">
           <div className="flex items-center space-x-2 mb-2">
-            <Droplets className="h-4 w-4 text-blue-600" />
+            <Droplets className="h-4 w-4 text-emerald-600" />
             <span className="text-xs text-gray-600">Soil Moisture</span>
           </div>
-          <p className="text-xl font-bold text-blue-600">{waterData.conservation.soilMoisture}%</p>
+          <p className="text-xl font-bold text-emerald-600">{waterData.conservation.soilMoisture}%</p>
           <p className="text-xs text-gray-500">optimal level</p>
         </div>
       </div>

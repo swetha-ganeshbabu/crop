@@ -18,15 +18,17 @@ export default function VoiceAlerts({ alerts, enabled, onToggle }: VoiceAlertsPr
     }
   }, [])
 
-  useEffect(() => {
-    if (enabled && alerts.length > 0 && synthRef.current) {
-      const latestAlert = alerts[0]
-      const utterance = new SpeechSynthesisUtterance(latestAlert)
-      utterance.rate = 0.9
-      utterance.pitch = 1
-      synthRef.current.speak(utterance)
-    }
-  }, [alerts, enabled])
+  // Removed automatic audio playback - user must explicitly enable voice alerts
+  // Voice alerts will only play when user clicks the voice button
+  // useEffect(() => {
+  //   if (enabled && alerts.length > 0 && synthRef.current) {
+  //     const latestAlert = alerts[0]
+  //     const utterance = new SpeechSynthesisUtterance(latestAlert)
+  //     utterance.rate = 0.9
+  //     utterance.pitch = 1
+  //     synthRef.current.speak(utterance)
+  //   }
+  // }, [alerts, enabled])
 
   if (alerts.length === 0) return null
 

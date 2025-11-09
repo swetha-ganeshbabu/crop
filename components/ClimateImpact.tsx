@@ -89,9 +89,9 @@ export default function ClimateImpact() {
       </div>
 
       {/* Climate Resilience */}
-      <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+      <div className="mb-6 p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded-lg">
         <div className="flex items-center space-x-2 mb-3">
-          <Shield className="h-5 w-5 text-blue-600" />
+          <Shield className="h-5 w-5 text-emerald-600" />
           <h3 className="font-semibold text-gray-800">Climate Resilience</h3>
         </div>
         <div className="space-y-3">
@@ -104,7 +104,7 @@ export default function ClimateImpact() {
             </div>
             <div className="bg-white rounded p-2">
               <p className="text-xs text-gray-600 mb-1">Your Yield Loss:</p>
-              <p className="text-lg font-bold text-blue-600">{climateData.climateResilience.yieldLoss}%</p>
+              <p className="text-lg font-bold text-emerald-600">{climateData.climateResilience.yieldLoss}%</p>
               <p className="text-xs text-gray-500 mt-1">
                 vs {climateData.climateResilience.conventionalYieldLoss}% for conventional farms
               </p>
@@ -114,7 +114,7 @@ export default function ClimateImpact() {
       </div>
 
       {/* Microclimate Impact */}
-      <div className="mb-6 p-4 bg-purple-50 border-l-4 border-purple-500 rounded-lg">
+      <div className="mb-6 p-4 bg-teal-50 border-l-4 border-teal-500 rounded-lg">
         <h3 className="font-semibold text-gray-800 mb-3">Microclimate Benefits</h3>
         <div className="space-y-2">
           <div className="flex items-center justify-between bg-white rounded p-2">
@@ -122,17 +122,17 @@ export default function ClimateImpact() {
               <Thermometer className="h-4 w-4 text-red-600" />
               <span className="text-sm text-gray-700">Temperature</span>
             </div>
-            <span className="text-sm font-bold text-blue-600">
+            <span className="text-sm font-bold text-teal-600">
               {climateData.microclimate.temperature > 0 ? '+' : ''}{climateData.microclimate.temperature}°F
             </span>
             <span className="text-xs text-gray-500">cooler than surrounding</span>
           </div>
           <div className="flex items-center justify-between bg-white rounded p-2">
             <div className="flex items-center space-x-2">
-              <Droplets className="h-4 w-4 text-cyan-600" />
+              <Droplets className="h-4 w-4 text-teal-600" />
               <span className="text-sm text-gray-700">Humidity</span>
             </div>
-            <span className="text-sm font-bold text-cyan-600">+{climateData.microclimate.humidity}%</span>
+            <span className="text-sm font-bold text-teal-600">+{climateData.microclimate.humidity}%</span>
             <span className="text-xs text-gray-500">higher</span>
           </div>
           <div className="flex items-center justify-between bg-white rounded p-2">
@@ -144,7 +144,7 @@ export default function ClimateImpact() {
             <span className="text-xs text-gray-500">reduction</span>
           </div>
         </div>
-        <p className="text-xs text-purple-700 mt-2">
+        <p className="text-xs text-teal-700 mt-2">
           🌍 Your farm is actively cooling the local environment and creating a more stable microclimate.
         </p>
       </div>

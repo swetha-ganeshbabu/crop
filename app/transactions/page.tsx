@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, ShoppingCart, Filter, Calendar, BarChart3, Lightbulb } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, ShoppingCart, Filter, Calendar, BarChart3, Lightbulb, ChevronDown, ChevronRight } from 'lucide-react'
 
 interface Transaction {
   id: string
@@ -21,6 +21,170 @@ interface TransactionInsight {
   profitImpact: 'positive' | 'negative' | 'neutral'
   profitAmount: number
   recommendation: string
+}
+
+// Component to format AI recommendations with proper structure
+function FormattedRecommendation({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false)
+  
+  // Parse the recommendation text into structured sections
+  const parseRecommendation = (text: string) => {
+    const sections: { title?: string; type: 'summary' | 'list' | 'paragraph' | 'checklist'; content: string[] }[] = []
+    
+    // Split by double newlines or section patterns
+    const parts = text.split(/\n\s*\n/).filter(p => p.trim())
+    
+    parts.forEach(part => {
+      const lines = part.split('\n').filter(line => line.trim())
+      if (lines.length === 0) return
+      
+      const firstLine = lines[0].trim()
+      
+      // Check if this is a section header (ends with colon, or starts with common section keywords)
+      const isSectionHeader = firstLine.match(/^(Quick Read|Practical steps|Cost-effective|Regenerative|Specific actionable|Quick examples|If you want|\d+-\d+\s+days?)[:]/i) ||
+                             (firstLine.endsWith(':') && firstLine.length < 80 && !firstLine.includes('→'))
+      
+      if (isSectionHeader) {
+        const title = firstLine.replace(/:/, '').trim()
+        const content = lines.slice(1)
+        
+        // Determine section type
+        let type: 'summary' | 'list' | 'paragraph' | 'checklist' = 'list'
+        if (title.toLowerCase().includes('quick read')) {
+          type = 'summary'
+        } else if (title.toLowerCase().includes('days') || title.toLowerCase().includes('actionable')) {
+          type = 'checklist'
+        }
+        
+        sections.push({
+          title,
+          type,
+          content: content.length > 0 ? content : []
+        })
+      } else {
+        // This is content - check if it's a list or paragraph
+        const hasBullets = lines.some(l => l.trim().match(/^[*•\-]\s/) || l.trim().match(/^\d+\.\s/))
+        
+        if (hasBullets) {
+          // List section
+          sections.push({
+            type: 'list',
+            content: lines.map(l => l.trim().replace(/^[*•\-]\s*/, '').replace(/^\d+\.\s*/, ''))
+          })
+        } else {
+          // Paragraph section
+          sections.push({
+            type: 'paragraph',
+            content: [lines.join(' ')]
+          })
+        }
+      }
+    })
+    
+    // If no structure found, try to parse as simple text with line breaks
+    if (sections.length === 0) {
+      const lines = text.split('\n').filter(l => l.trim())
+      const hasStructure = lines.some(l => l.trim().match(/^[*•\-]/) || l.trim().match(/^\d+\./))
+      
+      if (hasStructure) {
+        return [{
+          type: 'list',
+          content: lines.map(l => l.trim().replace(/^[*•\-]\s*/, '').replace(/^\d+\.\s*/, ''))
+        }]
+      }
+      
+      return [{ type: 'paragraph' as const, content: [text] }]
+    }
+    
+    return sections
+  }
+  
+  const sections = parseRecommendation(text)
+  const hasMultipleSections = sections.length > 1
+  const summary = sections.find(s => s.title?.toLowerCase().includes('quick read') || (!s.title && s.type === 'paragraph' && sections.length === 1))
+  const details = sections.filter(s => s !== summary)
+  
+  return (
+    <div className="space-y-3">
+      {/* Summary - Always visible */}
+      {summary && (
+        <div className="bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
+          {summary.title && (
+            <h4 className="text-sm font-semibold text-blue-900 mb-2">{summary.title}</h4>
+          )}
+          <div className="text-sm text-gray-800 leading-relaxed">
+            {summary.type === 'list' ? (
+              <ul className="space-y-1.5">
+                {summary.content.map((item, idx) => (
+                  <li key={idx} className="flex items-start space-x-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span className="flex-1">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="whitespace-pre-line">{summary.content.join('\n')}</p>
+            )}
+          </div>
+        </div>
+      )}
+      
+      {/* Detailed sections - Collapsible */}
+      {hasMultipleSections && details.length > 0 && (
+        <div className="space-y-2">
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center space-x-2 text-sm font-semibold text-blue-700 hover:text-blue-900 transition-colors w-full text-left"
+          >
+            {expanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+            <span>{expanded ? 'Hide' : 'Show'} Detailed Recommendations ({details.length} sections)</span>
+          </button>
+          
+          {expanded && (
+            <div className="space-y-3 pl-6 border-l-2 border-blue-200">
+              {details.map((section, idx) => (
+                <div key={idx} className="bg-white rounded-lg p-4 border border-blue-100 shadow-sm">
+                  {section.title && (
+                    <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center space-x-2">
+                      <span className="w-1.5 h-1.5 bg-blue-600 rounded-full"></span>
+                      <span>{section.title}</span>
+                    </h4>
+                  )}
+                  {section.type === 'list' || section.type === 'checklist' ? (
+                    <ul className="space-y-2">
+                      {section.content.map((item, itemIdx) => (
+                        <li key={itemIdx} className="text-sm text-gray-700 flex items-start space-x-2">
+                          <span className="text-blue-600 mt-1.5 font-bold">•</span>
+                          <span className="flex-1 leading-relaxed">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+                      {section.content.join('\n')}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Simple format if no structure detected */}
+      {!hasMultipleSections && !summary && (
+        <div className="bg-white rounded-lg p-3 border border-blue-200 shadow-sm">
+          <p className="text-sm text-gray-800 leading-relaxed whitespace-pre-line">
+            {text}
+          </p>
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function TransactionsPage() {
@@ -69,18 +233,18 @@ export default function TransactionsPage() {
         })) || []
 
         setTransactions(mappedTransactions)
-        analyzeTransactions(mappedTransactions)
+        await analyzeTransactions(mappedTransactions)
       } else {
         // Use mock data
         const mockTransactions = getMockTransactions()
         setTransactions(mockTransactions)
-        analyzeTransactions(mockTransactions)
+        await analyzeTransactions(mockTransactions)
       }
     } catch (error) {
       console.error('Error fetching transactions:', error)
       const mockTransactions = getMockTransactions()
       setTransactions(mockTransactions)
-      analyzeTransactions(mockTransactions)
+      await analyzeTransactions(mockTransactions)
     } finally {
       setLoading(false)
     }
@@ -99,10 +263,17 @@ export default function TransactionsPage() {
       { id: '2', merchant: 'Bayer CropScience', amount: 12400, category: 'seeds', date: '2024-03-08', sku: 'BAY-SOY-XB33A-50LB', productName: 'Bayer XB33A Soybean Seed 50lb' },
       { id: '3', merchant: 'Syngenta Seeds', amount: 8900, category: 'seeds', date: '2024-02-28', sku: 'SYN-WHT-AGRI-50LB', productName: 'Syngenta AgriPro Wheat Seed 50lb' },
       
-      // Fertilizer - Pre-planting application
-      { id: '4', merchant: 'Tractor Supply Co', amount: 12450, category: 'fertilizer', date: '2024-03-12', sku: 'TS-FERT-NPK-10-10-10-50LB', productName: 'NPK 10-10-10 Fertilizer 50lb Bag' },
-      { id: '5', merchant: 'Rural King Supply', amount: 8750, category: 'fertilizer', date: '2024-03-15', sku: 'RK-UREA-46N-50LB', productName: 'Urea 46-0-0 Nitrogen Fertilizer 50lb' },
-      { id: '6', merchant: 'Farm & Fleet', amount: 6200, category: 'fertilizer', date: '2024-03-18', sku: 'FF-PHOS-0-46-0-50LB', productName: 'Phosphate 0-46-0 Fertilizer 50lb' },
+      // Fertilizer - Pre-planting and side-dress applications (more realistic farming data)
+      { id: '4', merchant: 'Tractor Supply Co', amount: 12450, category: 'fertilizer', date: '2024-03-12', sku: 'TS-FERT-NPK-10-10-10-50LB', productName: 'NPK 10-10-10 Balanced Fertilizer 50lb Bag' },
+      { id: '5', merchant: 'Rural King Supply', amount: 8750, category: 'fertilizer', date: '2024-03-15', sku: 'RK-UREA-46N-50LB', productName: 'Urea 46-0-0 Nitrogen Fertilizer 50lb Bag' },
+      { id: '6', merchant: 'Farm & Fleet', amount: 6200, category: 'fertilizer', date: '2024-03-18', sku: 'FF-PHOS-0-46-0-50LB', productName: 'Triple Super Phosphate 0-46-0 Fertilizer 50lb' },
+      { id: '19', merchant: 'Agrium Crop Nutrition', amount: 15200, category: 'fertilizer', date: '2024-04-02', sku: 'AGR-AMMONIUM-NITRATE-34-0-0', productName: 'Ammonium Nitrate 34-0-0 Fertilizer 50lb' },
+      { id: '20', merchant: 'Yara North America', amount: 11200, category: 'fertilizer', date: '2024-04-10', sku: 'YAR-POTASH-0-0-60-50LB', productName: 'Muriate of Potash 0-0-60 Fertilizer 50lb' },
+      { id: '21', merchant: 'Nutrien Ag Solutions', amount: 9800, category: 'fertilizer', date: '2024-04-15', sku: 'NUT-DAP-18-46-0-50LB', productName: 'Diammonium Phosphate DAP 18-46-0 50lb' },
+      { id: '22', merchant: 'Simplot Grower Solutions', amount: 13400, category: 'fertilizer', date: '2024-04-20', sku: 'SIM-MAP-11-52-0-50LB', productName: 'Monoammonium Phosphate MAP 11-52-0 50lb' },
+      { id: '23', merchant: 'CF Industries', amount: 8900, category: 'fertilizer', date: '2024-04-25', sku: 'CF-ANHYDROUS-AMMONIA-82-0-0', productName: 'Anhydrous Ammonia 82-0-0 Fertilizer Bulk' },
+      { id: '24', merchant: 'Tractor Supply Co', amount: 7200, category: 'fertilizer', date: '2024-05-01', sku: 'TS-LIME-AGRICULTURAL-50LB', productName: 'Agricultural Lime pH Amendment 50lb Bag' },
+      { id: '25', merchant: 'Rural King Supply', amount: 5600, category: 'fertilizer', date: '2024-05-05', sku: 'RK-MICRONUTRIENTS-ZN-MN-5LB', productName: 'Zinc & Manganese Micronutrient Mix 5lb' },
       
       // Pesticides & Herbicides - Crop protection
       { id: '7', merchant: 'Corteva Agriscience', amount: 11200, category: 'pesticides', date: '2024-03-20', sku: 'COR-ENLIST-2.5GAL', productName: 'Enlist Duo Herbicide 2.5 Gallon' },
@@ -126,7 +297,7 @@ export default function TransactionsPage() {
     ]
   }
 
-  const analyzeTransactions = (txns: Transaction[]) => {
+  const analyzeTransactions = async (txns: Transaction[]) => {
     const categoryMap: Record<string, { total: number; count: number; txns: Transaction[] }> = {}
 
     txns.forEach(txn => {
@@ -140,7 +311,7 @@ export default function TransactionsPage() {
 
     // Analyze profit impact based on category and regenerative practices
     const profitAnalysis: Record<string, { impact: 'positive' | 'negative' | 'neutral'; amount: number }> = {
-      fertilizer: { impact: 'negative', amount: -12500 }, // High fertilizer = negative (regenerative farms use less)
+      fertilizer: { impact: 'negative', amount: -19500 }, // High fertilizer = negative (regenerative farms use less)
       seeds: { impact: 'neutral', amount: 0 },
       equipment: { impact: 'neutral', amount: 0 },
       pesticides: { impact: 'negative', amount: -4200 }, // Pesticides = negative (regenerative farms avoid)
@@ -148,33 +319,74 @@ export default function TransactionsPage() {
       other: { impact: 'neutral', amount: 0 },
     }
 
-    const insightsList: TransactionInsight[] = Object.entries(categoryMap).map(([category, data]) => {
-      const analysis = profitAnalysis[category] || { impact: 'neutral', amount: 0 }
-      
-      let recommendation = ''
-      if (category === 'fertilizer' && data.total > 10000) {
-        recommendation = 'High fertilizer spending detected. Consider cover crops and compost to reduce dependency by 60-80%.'
-      } else if (category === 'pesticides' && data.total > 3000) {
-        recommendation = 'Pesticide spending is high. Beneficial insects and crop rotation can eliminate most pesticide needs.'
-      } else if (category === 'fuel' && data.total > 2000) {
-        recommendation = 'Reduce fuel costs by implementing no-till practices and optimizing field routes.'
-      } else if (category === 'seeds') {
-        recommendation = 'Seed investment is good. Consider heirloom varieties for better nutrient density.'
-      } else {
-        recommendation = 'Spending in this category is within normal range.'
-      }
+    // Use Dedalus AI for intelligent spending analysis
+    const insightsList: TransactionInsight[] = await Promise.all(
+      Object.entries(categoryMap).map(async ([category, data]) => {
+        const analysis = profitAnalysis[category] || { impact: 'neutral', amount: 0 }
+        
+        // Get AI recommendation from Dedalus
+        let recommendation = ''
+        try {
+          const dedalusResponse = await fetch('/api/dedalus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              input: `Analyze this farmer's spending in the ${category} category:
+              
+Total Spent: $${data.total.toLocaleString()}
+Number of Transactions: ${data.count}
+Category: ${category}
+Sample Products: ${data.txns.slice(0, 3).map(t => t.productName || t.merchant).join(', ')}
 
-      return {
-        category,
-        totalSpent: data.total,
-        transactions: data.count,
-        profitImpact: analysis.impact,
-        profitAmount: analysis.amount,
-        recommendation,
-      }
-    })
+Provide a cost-effective recommendation for this farmer. Focus on:
+1. How to optimize spending in this category
+2. Cost-effective alternatives or practices
+3. Regenerative farming approaches that could reduce costs
+4. Specific actionable advice for a farmer
+
+Keep the response concise and practical.`,
+            }),
+          })
+
+          if (dedalusResponse.ok) {
+            const dedalusData = await dedalusResponse.json()
+            recommendation = dedalusData.final_output || generateFallbackRecommendation(category, data)
+          } else {
+            recommendation = generateFallbackRecommendation(category, data)
+          }
+        } catch (error) {
+          console.error('Dedalus API error:', error)
+          recommendation = generateFallbackRecommendation(category, data)
+        }
+
+        return {
+          category,
+          totalSpent: data.total,
+          transactions: data.count,
+          profitImpact: analysis.impact,
+          profitAmount: analysis.amount,
+          recommendation,
+        }
+      })
+    )
 
     setInsights(insightsList)
+  }
+
+  const generateFallbackRecommendation = (category: string, data: { total: number; count: number }): string => {
+    if (category === 'fertilizer' && data.total > 50000) {
+      return 'Your fertilizer spending is significant. Consider implementing cover crops, compost application, and crop rotation to reduce synthetic fertilizer dependency by 60-80%. This could save $30,000+ annually while improving soil health.'
+    } else if (category === 'fertilizer' && data.total > 20000) {
+      return 'Moderate fertilizer spending detected. Explore organic alternatives like compost tea, manure application, and legume cover crops to reduce costs by 40-60% while maintaining yields.'
+    } else if (category === 'pesticides' && data.total > 3000) {
+      return 'Pesticide spending is high. Beneficial insects, crop rotation, and integrated pest management can eliminate 70-90% of pesticide needs, saving thousands while improving ecosystem health.'
+    } else if (category === 'fuel' && data.total > 2000) {
+      return 'Reduce fuel costs by implementing no-till practices, optimizing field routes, and using cover crops to reduce tillage passes. Potential savings: $2,000-3,000 per season.'
+    } else if (category === 'seeds') {
+      return 'Seed investment is essential. Consider heirloom varieties and seed saving programs for long-term cost reduction. Your current seed spending is appropriate for quality yields.'
+    } else {
+      return 'Spending in this category is within normal range. Continue monitoring for optimization opportunities.'
+    }
   }
 
   const filteredTransactions = transactions.filter(txn => {
@@ -215,8 +427,8 @@ export default function TransactionsPage() {
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">Transaction History & Insights</h1>
-              <p className="text-gray-600">Track spending, analyze profit impact, and get AI recommendations</p>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">Farmer Expenditure Analysis</h1>
+              <p className="text-gray-600">We analyze your farm spending patterns using AI to identify cost-effective opportunities and optimize your operational expenses</p>
             </div>
             <div className="flex items-center space-x-2">
               <div className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-lg">
@@ -230,20 +442,20 @@ export default function TransactionsPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Total Spent</p>
+              <p className="text-sm text-gray-600">Total Farm Expenditures</p>
               <DollarSign className="h-5 w-5 text-gray-400" />
             </div>
             <p className="text-3xl font-bold text-gray-800">${totalSpent.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">This season</p>
+            <p className="text-xs text-gray-500 mt-1">Analyzed this growing season</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-gray-600">Potential Savings</p>
+              <p className="text-sm text-gray-600">AI-Identified Savings</p>
               <TrendingUp className="h-5 w-5 text-green-600" />
             </div>
             <p className="text-3xl font-bold text-green-600">${totalNegativeImpact.toLocaleString()}</p>
-            <p className="text-xs text-gray-500 mt-1">From regenerative practices</p>
+            <p className="text-xs text-gray-500 mt-1">Cost-effective opportunities found</p>
           </div>
 
           <div className="bg-white rounded-lg shadow-md p-6">
@@ -258,9 +470,12 @@ export default function TransactionsPage() {
 
         {/* Insights */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Lightbulb className="h-6 w-6 text-yellow-600" />
-            <h2 className="text-xl font-bold text-gray-800">Profit Impact Analysis</h2>
+          <div className="mb-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Lightbulb className="h-6 w-6 text-yellow-600" />
+              <h2 className="text-xl font-bold text-gray-800">AI-Powered Spending Habits Analysis</h2>
+            </div>
+            <p className="text-sm text-gray-600 ml-8">Dedalus AI analyzes your expenditure patterns to identify cost-effective farming practices and spending optimization opportunities</p>
           </div>
           <div className="space-y-4">
             {insights.map((insight, idx) => (
@@ -283,8 +498,16 @@ export default function TransactionsPage() {
                     <p className="text-xs text-gray-500">{insight.transactions} transactions</p>
                   </div>
                 </div>
-                <div className="bg-blue-50 border-l-4 border-blue-400 p-3 rounded">
-                  <p className="text-sm text-blue-800">{insight.recommendation}</p>
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                  <div className="flex items-start space-x-3">
+                    <Lightbulb className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-blue-900 mb-3">AI-Powered Cost-Effective Recommendation:</p>
+                      <div className="prose prose-sm max-w-none">
+                        <FormattedRecommendation text={insight.recommendation} />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -294,7 +517,7 @@ export default function TransactionsPage() {
         {/* Transaction List */}
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800">Transaction History</h2>
+            <h2 className="text-xl font-bold text-gray-800">Detailed Farm Purchase History</h2>
             <div className="flex items-center space-x-2">
               <Filter className="h-5 w-5 text-gray-400" />
               <select

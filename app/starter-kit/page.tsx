@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Calculator, TrendingUp, Clock, DollarSign, CheckCircle, AlertTriangle, ArrowRight, LandPlot, Sprout } from 'lucide-react'
+import { Calculator, TrendingUp, Clock, DollarSign, CheckCircle, AlertTriangle, ArrowRight, LandPlot, Sprout, X, Loader2, Banknote, Calendar, FileText } from 'lucide-react'
 
 interface FeasibilityAnalysis {
   isFeasible: boolean
@@ -37,6 +37,19 @@ export default function StarterKitPage() {
   const [analysis, setAnalysis] = useState<FeasibilityAnalysis | null>(null)
   const [loading, setLoading] = useState(false)
   const [showLoan, setShowLoan] = useState(false)
+  const [loanModal, setLoanModal] = useState<{
+    isOpen: boolean
+    type: 'success' | 'error' | 'loading'
+    title: string
+    message: string
+    loanDetails?: {
+      amount: number
+      status: string
+      monthlyPayment: number
+      loanId?: string
+    }
+    errorDetails?: string
+  } | null>(null)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -137,6 +150,12 @@ export default function StarterKitPage() {
     if (!analysis || analysis.loanRequired <= 0) return
 
     setLoading(true)
+    setLoanModal({
+      isOpen: true,
+      type: 'loading',
+      title: 'Processing Loan Application',
+      message: 'Creating your Capital One account and processing your loan application...',
+    })
     try {
       // Step 1: Create or get customer in Capital One
       const userData = user || {}
@@ -156,21 +175,70 @@ export default function StarterKitPage() {
       const customerId = customerData.customerId || customerData.customer?._id
 
       if (!customerId) {
-        alert('Failed to create customer account. Please check your Capital One API key.')
+        setLoanModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Customer Creation Failed',
+          message: 'Failed to create customer account.',
+          errorDetails: 'Please check your Capital One API key and try again.',
+        })
         setLoading(false)
         return
       }
 
-      // Step 2: Create loan account
-      const loanResponse = await fetch('/api/capital-one/accounts', {
+      // Step 2: Create a regular account first (required for loans)
+      const accountResponse = await fetch('/api/capital-one/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'create_account',
           customerId: customerId,
-          accountType: 'Loan',
-          loanAmount: analysis.loanRequired,
-          nickname: `Farm Loan - ${formData.cropType} (${formData.acres} acres)`,
+          accountType: 'Savings',
+          initialDeposit: 0,
+          nickname: `Farm Account - ${userData.name || 'Farmer'}`,
+        }),
+      })
+
+      const accountData = await accountResponse.json()
+      
+      if (!accountData.success) {
+        setLoanModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Account Creation Failed',
+          message: accountData.error || 'Failed to create account',
+          errorDetails: accountData.details || 'Please try again.',
+        })
+        setLoading(false)
+        return
+      }
+
+      const accountId = accountData.accountId || accountData.account?._id
+
+      if (!accountId) {
+        console.error('Account creation response:', accountData)
+        setLoanModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Account Creation Failed',
+          message: 'Failed to create account.',
+          errorDetails: 'Please check the console for details.',
+        })
+        setLoading(false)
+        return
+      }
+
+      // Step 3: Create loan using the proper loan endpoint
+      const loanResponse = await fetch('/api/capital-one/loans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId: accountId,
+          type: 'home', // Loan type
+          amount: analysis.loanRequired,
+          monthlyPayment: Math.round(analysis.loanRequired / 60), // 5-year loan estimate
+          creditScore: 687, // Default credit score
+          description: `Farm loan for ${formData.cropType} cultivation on ${formData.acres} acres`,
         }),
       })
 
@@ -178,13 +246,36 @@ export default function StarterKitPage() {
 
       if (loanData.success) {
         setShowLoan(true)
-        alert(`Loan application successful! Loan account created for $${analysis.loanRequired.toLocaleString()}`)
+        setLoanModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Loan Application Successful! 🎉',
+          message: 'Your loan application has been submitted to Capital One.',
+          loanDetails: {
+            amount: analysis.loanRequired,
+            status: loanData.loan?.status || 'pending',
+            monthlyPayment: Math.round(analysis.loanRequired / 60),
+            loanId: loanData.loanId,
+          },
+        })
       } else {
-        alert(`Loan application failed: ${loanData.error || 'Unknown error'}`)
+        setLoanModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Loan Application Failed',
+          message: loanData.error || 'Failed to create loan',
+          errorDetails: loanData.details || 'Please try again.',
+        })
       }
     } catch (error) {
       console.error('Loan application error:', error)
-      alert('Failed to process loan application. Please try again.')
+      setLoanModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Application Error',
+        message: 'Failed to process loan application.',
+        errorDetails: 'Please try again or contact support if the issue persists.',
+      })
     } finally {
       setLoading(false)
     }
@@ -224,7 +315,7 @@ export default function StarterKitPage() {
                 <select
                   value={formData.cropType}
                   onChange={(e) => setFormData({ ...formData, cropType: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                 >
                   <option value="corn">Corn</option>
                   <option value="soybeans">Soybeans</option>
@@ -240,7 +331,7 @@ export default function StarterKitPage() {
                   type="number"
                   value={formData.acres}
                   onChange={(e) => setFormData({ ...formData, acres: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                   placeholder="e.g., 50"
                   required
                 />
@@ -252,7 +343,7 @@ export default function StarterKitPage() {
                   type="number"
                   value={formData.currentBudget}
                   onChange={(e) => setFormData({ ...formData, currentBudget: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                   placeholder="e.g., 50000"
                   required
                 />
@@ -264,7 +355,7 @@ export default function StarterKitPage() {
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 bg-white text-gray-900"
                   placeholder="State or Region"
                 />
               </div>
@@ -411,12 +502,152 @@ export default function StarterKitPage() {
             <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-center h-full">
               <div className="text-center text-gray-400">
                 <Calculator className="h-16 w-16 mx-auto mb-4" />
-                <p>Fill out the form and click "Calculate Feasibility" to see your analysis</p>
+                <p>Fill out the form and click &quot;Calculate Feasibility&quot; to see your analysis</p>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      {/* Loan Application Modal */}
+      {loanModal && loanModal.isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
+          onClick={() => setLoanModal(null)}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-2xl max-w-md w-full transform transition-all"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className={`p-6 rounded-t-lg ${
+              loanModal.type === 'success' 
+                ? 'bg-gradient-to-r from-green-600 to-emerald-700' 
+                : loanModal.type === 'error'
+                ? 'bg-gradient-to-r from-red-600 to-rose-700'
+                : 'bg-gradient-to-r from-blue-600 to-indigo-700'
+            } text-white`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  {loanModal.type === 'success' ? (
+                    <CheckCircle className="h-8 w-8" />
+                  ) : loanModal.type === 'error' ? (
+                    <AlertTriangle className="h-8 w-8" />
+                  ) : (
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  )}
+                  <h2 className="text-2xl font-bold">{loanModal.title}</h2>
+                </div>
+                <button
+                  onClick={() => setLoanModal(null)}
+                  className="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {loanModal.type === 'loading' ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+                  <p className="text-gray-600">{loanModal.message}</p>
+                </div>
+              ) : loanModal.type === 'success' && loanModal.loanDetails ? (
+                <div className="space-y-4">
+                  <p className="text-gray-700">{loanModal.message}</p>
+                  
+                  {/* Loan Details Card */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg p-5">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Banknote className="h-5 w-5 text-green-600" />
+                          <span className="text-sm font-medium text-gray-600">Loan Amount</span>
+                        </div>
+                        <span className="text-2xl font-bold text-green-700">
+                          ${loanModal.loanDetails.amount.toLocaleString()}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Calendar className="h-5 w-5 text-green-600" />
+                          <span className="text-sm font-medium text-gray-600">Monthly Payment</span>
+                        </div>
+                        <span className="text-xl font-semibold text-gray-800">
+                          ${loanModal.loanDetails.monthlyPayment.toLocaleString()}/mo
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="h-5 w-5 text-green-600" />
+                          <span className="text-sm font-medium text-gray-600">Status</span>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          loanModal.loanDetails.status === 'pending'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-green-100 text-green-800'
+                        }`}>
+                          {loanModal.loanDetails.status.toUpperCase()}
+                        </span>
+                      </div>
+
+                      {loanModal.loanDetails.loanId && (
+                        <div className="pt-3 border-t border-green-200">
+                          <p className="text-xs text-gray-500">Loan ID: {loanModal.loanDetails.loanId}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
+                    <p className="text-sm text-blue-800">
+                      ✅ Your loan application has been submitted. You'll receive updates via email.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-gray-700">{loanModal.message}</p>
+                  {loanModal.errorDetails && (
+                    <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                      <p className="text-sm text-red-800">{loanModal.errorDetails}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="mt-6 flex justify-end space-x-3">
+                {loanModal.type === 'error' && (
+                  <button
+                    onClick={() => {
+                      setLoanModal(null)
+                      handleLoanApplication()
+                    }}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                )}
+                <button
+                  onClick={() => setLoanModal(null)}
+                  className={`px-4 py-2 rounded-lg transition-colors ${
+                    loanModal.type === 'success'
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                  }`}
+                >
+                  {loanModal.type === 'success' ? 'Great!' : 'Close'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

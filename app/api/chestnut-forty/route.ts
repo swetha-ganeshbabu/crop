@@ -91,6 +91,29 @@ async function generateAdvancedPredictions(params: any) {
   )
   const usdaData = usdaResponse.ok ? await usdaResponse.json() : null
 
+  // Fetch real-time weather if not provided
+  let realWeatherData = weatherData
+  if (!realWeatherData || !realWeatherData.rainfall) {
+    try {
+      const weatherResponse = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/weather?lat=40.7128&lon=-74.0060`
+      )
+      if (weatherResponse.ok) {
+        const weatherResult = await weatherResponse.json()
+        if (weatherResult.success && weatherResult.current) {
+          realWeatherData = {
+            rainfall: estimateRainfallFromForecast(weatherResult.forecast),
+            avgTemperature: weatherResult.current.temp,
+            condition: weatherResult.current.condition,
+            windSpeed: weatherResult.current.windSpeed,
+          }
+        }
+      }
+    } catch (error) {
+      console.log('Real weather data not available, using provided weatherData')
+    }
+  }
+
   // Base yield from USDA
   const baseYield = usdaData?.data?.currentYield || 150
 
@@ -99,8 +122,8 @@ async function generateAdvancedPredictions(params: any) {
     // Soil health factor (0.8 to 1.2)
     soilHealth: calculateSoilFactor(soilData),
     
-    // Weather factor (0.7 to 1.3)
-    weather: calculateWeatherFactor(weatherData),
+    // Weather factor (0.7 to 1.3) - NOW USING REAL WEATHER DATA
+    weather: calculateWeatherFactor(realWeatherData || weatherData),
     
     // Regenerative practices bonus (1.0 to 1.15)
     regenerativeBonus: calculateRegenerativeBonus(farmPractices),
@@ -122,8 +145,8 @@ async function generateAdvancedPredictions(params: any) {
   const riskScore = calculateRiskScore(factors)
   const riskLevel = riskScore < 0.3 ? 'low' : riskScore < 0.6 ? 'medium' : 'high'
 
-  // Confidence based on data quality
-  const confidence = calculateConfidence(usdaData, soilData, weatherData)
+  // Confidence based on data quality - NOW INCLUDES REAL WEATHER
+  const confidence = calculateConfidence(usdaData, soilData, realWeatherData || weatherData)
 
   // Recommendations
   const recommendations = generateRecommendations(factors, riskLevel, crop)
@@ -265,5 +288,20 @@ function generateTimeline(crop: string, factors: any): any[] {
       status: index < months.length * 0.7 ? 'growing' : 'mature',
     }
   })
+}
+
+// Estimate rainfall from weather forecast
+function estimateRainfallFromForecast(forecast: any[]): number {
+  if (!forecast || forecast.length === 0) return 25 // Default
+  
+  // Count rainy days in forecast
+  const rainyDays = forecast.filter((day: any) => 
+    day.condition?.toLowerCase().includes('rain') || 
+    day.condition?.toLowerCase().includes('shower')
+  ).length
+  
+  // Estimate: 0.5-1 inch per rainy day, plus base
+  const estimatedRainfall = 20 + (rainyDays * 0.75)
+  return Math.round(estimatedRainfall)
 }
 

@@ -82,7 +82,7 @@ export default function PlantingAdvice({ onReadAloud }: PlantingAdviceProps = {}
     const colors: Record<string, string> = {
       high: 'bg-red-100 text-red-800 border-red-300',
       medium: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-      low: 'bg-blue-100 text-blue-800 border-blue-300',
+      low: 'bg-teal-100 text-teal-800 border-teal-300',
     }
     return colors[priority] || colors.medium
   }
@@ -190,12 +190,12 @@ export default function PlantingAdvice({ onReadAloud }: PlantingAdviceProps = {}
       </div>
 
       {/* Climate Adaptation Tips */}
-      <div className="mt-6 bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
-        <h3 className="font-semibold text-blue-800 mb-2 flex items-center">
+        <div className="mt-6 bg-emerald-50 border-l-4 border-emerald-400 p-4 rounded">
+          <h3 className="font-semibold text-emerald-800 mb-2 flex items-center">
           <AlertCircle className="h-5 w-5 mr-2" />
           Climate Adaptation Strategy
         </h3>
-        <p className="text-sm text-blue-700">
+        <p className="text-sm text-emerald-700">
           Based on climate projections, consider diversifying your crop rotation to include 
           drought-resistant varieties. The AI recommends planting 20% of your acreage with 
           cover crops to improve soil resilience against unpredictable weather patterns.

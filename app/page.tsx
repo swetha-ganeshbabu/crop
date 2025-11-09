@@ -23,28 +23,42 @@ export default function Home() {
   useEffect(() => {
     // Check if user is logged in - only run on client
     if (typeof window === 'undefined') {
+      setLoading(false)
       return
     }
     
-    const storedUser = localStorage.getItem('farmer_user')
-    const storedToken = localStorage.getItem('farmer_token')
+    try {
+      const storedUser = localStorage.getItem('farmer_user')
+      const storedToken = localStorage.getItem('farmer_token')
 
-    if (storedUser && storedToken) {
-      try {
-        const parsedUser = JSON.parse(storedUser)
-        setUser(parsedUser)
+      if (storedUser && storedToken) {
+        try {
+          const parsedUser = JSON.parse(storedUser)
+          setUser(parsedUser)
+          setLoading(false)
+        } catch (error) {
+          // Invalid user data, redirect to login
+          console.error('Error parsing user data:', error)
+          localStorage.removeItem('farmer_user')
+          localStorage.removeItem('farmer_token')
+          setLoading(false)
+          setTimeout(() => {
+            window.location.href = '/login'
+          }, 100)
+        }
+      } else {
+        // Redirect to login if not authenticated
         setLoading(false)
-      } catch (error) {
-        // Invalid user data, redirect to login
-        localStorage.removeItem('farmer_user')
-        localStorage.removeItem('farmer_token')
-        setLoading(false)
-        window.location.href = '/login'
+        setTimeout(() => {
+          window.location.href = '/login'
+        }, 100)
       }
-    } else {
-      // Redirect to login if not authenticated
+    } catch (error) {
+      console.error('Error checking authentication:', error)
       setLoading(false)
-      window.location.href = '/login'
+      setTimeout(() => {
+        window.location.href = '/login'
+      }, 100)
     }
   }, [])
 

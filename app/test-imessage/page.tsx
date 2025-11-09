@@ -198,7 +198,7 @@ export default function TestiMessagePage() {
             </button>
           </div>
           <div className="mt-3 text-xs text-gray-500">
-            <p>💡 Try: "Status", "Show spending", "Soil health", "What should I plant?"</p>
+            <p>💡 Try: &quot;Status&quot;, &quot;Show spending&quot;, &quot;Soil health&quot;, &quot;What should I plant?&quot;</p>
           </div>
         </div>
       </div>

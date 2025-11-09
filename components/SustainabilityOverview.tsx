@@ -69,41 +69,41 @@ export default function SustainabilityOverview() {
 
       {/* Key Impact Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg p-4 border-l-4 border-blue-500">
+        <div className="bg-white rounded-lg p-4 border-l-4 border-emerald-500">
           <div className="flex items-center space-x-2 mb-2">
-            <Wind className="h-5 w-5 text-blue-600" />
+            <Wind className="h-5 w-5 text-emerald-600" />
             <span className="text-xs text-gray-600">Carbon Sequestered</span>
           </div>
-          <p className="text-2xl font-bold text-blue-600">{sustainability.impact.carbonSequestrated}</p>
+          <p className="text-2xl font-bold text-emerald-600">{sustainability.impact.carbonSequestrated}</p>
           <p className="text-xs text-gray-500">tons CO₂e</p>
         </div>
 
-        <div className="bg-white rounded-lg p-4 border-l-4 border-cyan-500">
+        <div className="bg-white rounded-lg p-4 border-l-4 border-teal-500">
           <div className="flex items-center space-x-2 mb-2">
-            <Droplets className="h-5 w-5 text-cyan-600" />
+            <Droplets className="h-5 w-5 text-teal-600" />
             <span className="text-xs text-gray-600">Water Saved</span>
           </div>
-          <p className="text-2xl font-bold text-cyan-600">
+          <p className="text-2xl font-bold text-teal-600">
             {(sustainability.impact.waterSaved / 1000).toFixed(0)}K
           </p>
           <p className="text-xs text-gray-500">gallons</p>
         </div>
 
-        <div className="bg-white rounded-lg p-4 border-l-4 border-amber-500">
+        <div className="bg-white rounded-lg p-4 border-l-4 border-green-500">
           <div className="flex items-center space-x-2 mb-2">
-            <TreePine className="h-5 w-5 text-amber-600" />
+            <TreePine className="h-5 w-5 text-green-600" />
             <span className="text-xs text-gray-600">Erosion Prevented</span>
           </div>
-          <p className="text-2xl font-bold text-amber-600">{sustainability.impact.soilErosionPrevented}</p>
+          <p className="text-2xl font-bold text-green-600">{sustainability.impact.soilErosionPrevented}</p>
           <p className="text-xs text-gray-500">tons/year</p>
         </div>
 
-        <div className="bg-white rounded-lg p-4 border-l-4 border-purple-500">
+        <div className="bg-white rounded-lg p-4 border-l-4 border-emerald-600">
           <div className="flex items-center space-x-2 mb-2">
-            <Zap className="h-5 w-5 text-purple-600" />
+            <Zap className="h-5 w-5 text-emerald-600" />
             <span className="text-xs text-gray-600">Chemicals Reduced</span>
           </div>
-          <p className="text-2xl font-bold text-purple-600">{sustainability.impact.chemicalUseReduced}%</p>
+          <p className="text-2xl font-bold text-emerald-600">{sustainability.impact.chemicalUseReduced}%</p>
           <p className="text-xs text-gray-500">vs conventional</p>
         </div>
       </div>
@@ -155,13 +155,13 @@ export default function SustainabilityOverview() {
             <div className="flex items-center space-x-2">
               <div className="flex-1 bg-gray-200 rounded-full h-3">
                 <div
-                  className="bg-cyan-500 h-3 rounded-full"
+                  className="bg-teal-500 h-3 rounded-full"
                   style={{
                     width: `${(sustainability.comparison.yourFarm.waterUsage / sustainability.comparison.conventionalAverage.waterUsage) * 100}%`,
                   }}
                 />
               </div>
-              <span className="text-sm font-bold text-cyan-600">
+              <span className="text-sm font-bold text-teal-600">
                 {(sustainability.comparison.yourFarm.waterUsage / 1000).toFixed(0)}K gal
               </span>
             </div>
@@ -181,13 +181,13 @@ export default function SustainabilityOverview() {
             <div className="flex items-center space-x-2">
               <div className="flex-1 bg-gray-200 rounded-full h-3">
                 <div
-                  className="bg-purple-500 h-3 rounded-full"
+                  className="bg-emerald-500 h-3 rounded-full"
                   style={{
                     width: `${sustainability.comparison.yourFarm.chemicalUse}%`,
                   }}
                 />
               </div>
-              <span className="text-sm font-bold text-purple-600">
+              <span className="text-sm font-bold text-emerald-600">
                 {sustainability.comparison.yourFarm.chemicalUse}%
               </span>
             </div>

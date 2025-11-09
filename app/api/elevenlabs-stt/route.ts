@@ -32,6 +32,7 @@ export async function POST(request: Request) {
     // Create FormData for ElevenLabs API
     const formDataForElevenLabs = new FormData()
     formDataForElevenLabs.append('file', new Blob([audioBlob], { type: audioFile.type }), audioFile.name)
+    formDataForElevenLabs.append('model_id', 'eleven_multilingual_v2') // Required by ElevenLabs STT API
 
     // Make API call to ElevenLabs Speech-to-Text
     try {

@@ -44,14 +44,14 @@ export default function BiodiversityMetrics() {
       </div>
 
       {/* Biodiversity Index */}
-      <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-l-4 border-purple-500">
+      <div className="mb-6 p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border-l-4 border-emerald-500">
         <div className="flex items-center space-x-2 mb-3">
-          <Activity className="h-5 w-5 text-purple-600" />
+          <Activity className="h-5 w-5 text-emerald-600" />
           <h3 className="font-bold text-gray-800">Biodiversity Index</h3>
         </div>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-3xl font-bold text-purple-600">
+            <p className="text-3xl font-bold text-emerald-600">
               {biodiversity.biodiversityIndex.score}/{biodiversity.biodiversityIndex.maxScore}
             </p>
             <p className="text-sm text-gray-600">Ecosystem Vibrancy</p>
@@ -62,7 +62,7 @@ export default function BiodiversityMetrics() {
         </div>
         <div className="grid grid-cols-3 gap-3 mt-4">
           <div className="bg-white rounded p-2 text-center">
-            <Bird className="h-4 w-4 text-blue-600 mx-auto mb-1" />
+            <Bird className="h-4 w-4 text-teal-600 mx-auto mb-1" />
             <p className="text-lg font-bold text-gray-800">{biodiversity.biodiversityIndex.birdSpecies}</p>
             <p className="text-xs text-gray-500">Bird Species</p>
           </div>
@@ -72,7 +72,7 @@ export default function BiodiversityMetrics() {
             <p className="text-xs text-gray-500">Beneficial Insects</p>
           </div>
           <div className="bg-white rounded p-2 text-center">
-            <Activity className="h-4 w-4 text-purple-600 mx-auto mb-1" />
+            <Activity className="h-4 w-4 text-emerald-600 mx-auto mb-1" />
             <p className="text-lg font-bold text-gray-800">{biodiversity.biodiversityIndex.soilOrganisms}+</p>
             <p className="text-xs text-gray-500">Soil Organisms</p>
           </div>
@@ -125,12 +125,12 @@ export default function BiodiversityMetrics() {
           </div>
           <div>
             <p className="text-xs text-gray-600 mb-1">Grazing Days</p>
-            <p className="text-xl font-bold text-blue-600">{biodiversity.forageBiomass.grazingDays}</p>
+            <p className="text-xl font-bold text-teal-600">{biodiversity.forageBiomass.grazingDays}</p>
             <p className="text-xs text-gray-500">at 300 lbs/day</p>
           </div>
           <div>
             <p className="text-xs text-gray-600 mb-1">Protein</p>
-            <p className="text-xl font-bold text-purple-600">{biodiversity.forageBiomass.proteinContent}%</p>
+            <p className="text-xl font-bold text-emerald-600">{biodiversity.forageBiomass.proteinContent}%</p>
             <p className="text-xs text-gray-500">High quality</p>
           </div>
         </div>
@@ -140,8 +140,8 @@ export default function BiodiversityMetrics() {
       </div>
 
       {/* Ecosystem Services */}
-      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded">
-        <h3 className="font-semibold text-blue-800 mb-3">Ecosystem Services</h3>
+      <div className="bg-emerald-50 border-l-4 border-emerald-400 p-4 rounded">
+        <h3 className="font-semibold text-emerald-800 mb-3">Ecosystem Services</h3>
         <div className="space-y-2">
           <div className="flex items-start space-x-2">
             <Bug className="h-4 w-4 text-green-600 mt-0.5" />
@@ -158,7 +158,7 @@ export default function BiodiversityMetrics() {
             </div>
           </div>
           <div className="flex items-start space-x-2">
-            <Activity className="h-4 w-4 text-purple-600 mt-0.5" />
+            <Activity className="h-4 w-4 text-emerald-600 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-gray-800">Soil Building</p>
               <p className="text-xs text-gray-600">{biodiversity.ecosystemServices.soilBuilding}</p>
