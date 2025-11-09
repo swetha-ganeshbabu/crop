@@ -1,7 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { MapPin, Droplets, AlertCircle } from 'lucide-react'
+import { MapPin, Droplets, AlertCircle, Volume2 } from 'lucide-react'
+
+interface AerialFarmMapProps {
+  onReadAloud?: () => void
+}
 
 interface FieldStatus {
   id: number
@@ -18,7 +22,7 @@ interface FieldStatus {
   moistureLevel: 'optimal' | 'adequate' | 'low' | 'critical'
 }
 
-export default function AerialFarmMap() {
+export default function AerialFarmMap({ onReadAloud }: AerialFarmMapProps = {}) {
   const [selectedField, setSelectedField] = useState<FieldStatus | null>(null)
 
   // Initialize with mock data - fields with irrigation status
@@ -130,7 +134,18 @@ export default function AerialFarmMap() {
           <h2 className="text-xl font-bold text-gray-800">Aerial Farm Map</h2>
           <p className="text-sm text-gray-600 mt-1">Field colors indicate moisture levels and irrigation needs</p>
         </div>
-        <MapPin className="h-6 w-6 text-primary-600" />
+        <div className="flex items-center space-x-2">
+          {onReadAloud && (
+            <button
+              onClick={onReadAloud}
+              className="p-2 bg-green-100 hover:bg-green-200 rounded-lg transition-colors"
+              title="Read insights with Gemini + ElevenLabs"
+            >
+              <Volume2 className="h-5 w-5 text-green-600" />
+            </button>
+          )}
+          <MapPin className="h-6 w-6 text-primary-600" />
+        </div>
       </div>
 
       {/* Aerial View Farm Layout */}

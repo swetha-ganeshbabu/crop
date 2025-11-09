@@ -50,7 +50,7 @@ export default function TransactionsPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          merchant_id: 44,
+          merchant_id: typeof window !== 'undefined' ? parseInt(localStorage.getItem('knot_merchant_id') || '44') : 44,
           external_user_id: user?.email || 'farmer-123',
           limit: 50,
         }),
@@ -94,12 +94,35 @@ export default function TransactionsPage() {
 
   const getMockTransactions = (): Transaction[] => {
     return [
-      { id: '1', merchant: 'Tractor Supply Co', amount: 12500, category: 'fertilizer', date: '2024-03-15', sku: 'FERT-NPK-50LB', productName: 'NPK Fertilizer 50lb' },
-      { id: '2', merchant: 'John Deere', amount: 8500, category: 'equipment', date: '2024-03-10', sku: 'JD-PLOW-2024', productName: 'John Deere Plow 2024' },
-      { id: '3', merchant: 'Seed Co', amount: 3200, category: 'seeds', date: '2024-02-28', sku: 'CORN-HYBRID-X', productName: 'Corn Hybrid Seed X' },
-      { id: '4', merchant: 'AgChem', amount: 4200, category: 'pesticides', date: '2024-03-05', sku: 'HERB-ROUNDUP', productName: 'Herbicide Roundup' },
-      { id: '5', merchant: 'Shell', amount: 2800, category: 'fuel', date: '2024-03-12', sku: 'DIESEL-50GAL', productName: 'Diesel 50 Gal' },
-      { id: '6', merchant: 'Tractor Supply Co', amount: 1500, category: 'fertilizer', date: '2024-03-20', sku: 'FERT-UREA-40LB', productName: 'Urea Fertilizer 40lb' },
+      // Seeds - Spring planting season
+      { id: '1', merchant: 'Pioneer Seeds', amount: 18450, category: 'seeds', date: '2024-03-05', sku: 'PIO-33M57-CORN-50LB', productName: 'Pioneer 33M57 Corn Hybrid Seed 50lb' },
+      { id: '2', merchant: 'Bayer CropScience', amount: 12400, category: 'seeds', date: '2024-03-08', sku: 'BAY-SOY-XB33A-50LB', productName: 'Bayer XB33A Soybean Seed 50lb' },
+      { id: '3', merchant: 'Syngenta Seeds', amount: 8900, category: 'seeds', date: '2024-02-28', sku: 'SYN-WHT-AGRI-50LB', productName: 'Syngenta AgriPro Wheat Seed 50lb' },
+      
+      // Fertilizer - Pre-planting application
+      { id: '4', merchant: 'Tractor Supply Co', amount: 12450, category: 'fertilizer', date: '2024-03-12', sku: 'TS-FERT-NPK-10-10-10-50LB', productName: 'NPK 10-10-10 Fertilizer 50lb Bag' },
+      { id: '5', merchant: 'Rural King Supply', amount: 8750, category: 'fertilizer', date: '2024-03-15', sku: 'RK-UREA-46N-50LB', productName: 'Urea 46-0-0 Nitrogen Fertilizer 50lb' },
+      { id: '6', merchant: 'Farm & Fleet', amount: 6200, category: 'fertilizer', date: '2024-03-18', sku: 'FF-PHOS-0-46-0-50LB', productName: 'Phosphate 0-46-0 Fertilizer 50lb' },
+      
+      // Pesticides & Herbicides - Crop protection
+      { id: '7', merchant: 'Corteva Agriscience', amount: 11200, category: 'pesticides', date: '2024-03-20', sku: 'COR-ENLIST-2.5GAL', productName: 'Enlist Duo Herbicide 2.5 Gallon' },
+      { id: '8', merchant: 'BASF Agricultural', amount: 6800, category: 'pesticides', date: '2024-03-22', sku: 'BAS-ENGENIA-2.5GAL', productName: 'Engenia Herbicide 2.5 Gallon' },
+      { id: '9', merchant: 'FMC Corporation', amount: 5400, category: 'pesticides', date: '2024-03-25', sku: 'FMC-INSECT-ACE-1GAL', productName: 'Acephate Insecticide 1 Gallon' },
+      
+      // Equipment & Parts - Maintenance and upgrades
+      { id: '10', merchant: 'John Deere Parts', amount: 15200, category: 'equipment', date: '2024-03-10', sku: 'JD-PLOW-DISC-8FT', productName: 'John Deere Disc Plow 8ft Attachment' },
+      { id: '11', merchant: 'Case IH Dealer', amount: 9800, category: 'equipment', date: '2024-03-14', sku: 'CIH-PLANTER-ROW-12', productName: 'Case IH 12-Row Planter Unit' },
+      { id: '12', merchant: 'New Holland Parts', amount: 4200, category: 'equipment', date: '2024-03-16', sku: 'NH-HARROW-DISC-10FT', productName: 'New Holland Disc Harrow 10ft' },
+      { id: '13', merchant: 'Tractor Supply Co', amount: 1850, category: 'equipment', date: '2024-03-19', sku: 'TS-HYDRAULIC-HOSE-3/4', productName: 'Hydraulic Hose 3/4" x 20ft' },
+      
+      // Fuel - Diesel for tractors and equipment
+      { id: '14', merchant: 'Shell Fuel Station', amount: 3200, category: 'fuel', date: '2024-03-11', sku: 'SHELL-DIESEL-200GAL', productName: 'Shell Diesel Fuel 200 Gallons' },
+      { id: '15', merchant: 'Chevron Farm Co-op', amount: 2800, category: 'fuel', date: '2024-03-13', sku: 'CHEV-DIESEL-175GAL', productName: 'Chevron Diesel Fuel 175 Gallons' },
+      { id: '16', merchant: 'Local Farm Co-op', amount: 2400, category: 'fuel', date: '2024-03-17', sku: 'COOP-DIESEL-150GAL', productName: 'Farm Co-op Diesel 150 Gallons' },
+      
+      // Other supplies
+      { id: '17', merchant: 'Tractor Supply Co', amount: 1200, category: 'other', date: '2024-03-21', sku: 'TS-FENCING-WIRE-500FT', productName: 'Farm Fencing Wire 500ft Roll' },
+      { id: '18', merchant: 'Farm & Fleet', amount: 850, category: 'other', date: '2024-03-23', sku: 'FF-LIVESTOCK-FEED-50LB', productName: 'Livestock Feed 50lb Bag' },
     ]
   }
 

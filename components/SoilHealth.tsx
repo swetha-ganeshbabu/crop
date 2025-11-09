@@ -1,9 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Leaf, Droplets, Activity, AlertCircle } from 'lucide-react'
+import { Leaf, Droplets, Activity, AlertCircle, Volume2 } from 'lucide-react'
 
-export default function SoilHealth() {
+interface SoilHealthProps {
+  onReadAloud?: () => void
+}
+
+export default function SoilHealth({ onReadAloud }: SoilHealthProps = {}) {
   const [soilData, setSoilData] = useState<any>(() => {
     // Initialize with mock data immediately
     return {
@@ -60,7 +64,18 @@ export default function SoilHealth() {
     <div className="bg-white rounded-lg shadow-md p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-800">Soil Health Analysis</h2>
-        <Leaf className="h-6 w-6 text-green-600" />
+        <div className="flex items-center space-x-2">
+          {onReadAloud && (
+            <button
+              onClick={onReadAloud}
+              className="p-2 bg-green-100 hover:bg-green-200 rounded-lg transition-colors"
+              title="Read insights with Gemini + ElevenLabs"
+            >
+              <Volume2 className="h-5 w-5 text-green-600" />
+            </button>
+          )}
+          <Leaf className="h-6 w-6 text-green-600" />
+        </div>
       </div>
 
       {/* Overall Score */}

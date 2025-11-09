@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { DollarSign, TrendingDown, TrendingUp, ShoppingCart, AlertTriangle, CheckCircle } from 'lucide-react'
 
 interface Transaction {
@@ -27,175 +27,122 @@ interface SpendingAnalysis {
   recommendations: string[]
 }
 
-// Mock transaction data for demo (replace with real Knot API calls)
+// Realistic farmer transaction data - mimicking real agricultural purchases
 const mockTransactions: Transaction[] = [
-    { id: '1', merchant: 'Tractor Supply Co', amount: 12500, category: 'fertilizer', date: '2024-03-15', sku: 'FERT-NPK-50LB' },
-    { id: '2', merchant: 'John Deere', amount: 8500, category: 'equipment', date: '2024-03-10', sku: 'JD-PLOW-2024' },
-    { id: '3', merchant: 'Seed Co', amount: 3200, category: 'seeds', date: '2024-02-28', sku: 'CORN-HYBRID-X' },
-    { id: '4', merchant: 'AgChem', amount: 4200, category: 'pesticides', date: '2024-03-05', sku: 'HERB-ROUNDUP' },
-    { id: '5', merchant: 'Shell', amount: 2800, category: 'fuel', date: '2024-03-12', sku: 'DIESEL-50GAL' },
-    { id: '6', merchant: 'Tractor Supply Co', amount: 1500, category: 'fertilizer', date: '2024-03-20', sku: 'FERT-UREA-40LB' },
+    // Seeds - Spring planting season
+    { id: '1', merchant: 'Pioneer Seeds', amount: 18450, category: 'seeds', date: '2024-03-05', sku: 'PIO-33M57-CORN-50LB' },
+    { id: '2', merchant: 'Bayer CropScience', amount: 12400, category: 'seeds', date: '2024-03-08', sku: 'BAY-SOY-XB33A-50LB' },
+    { id: '3', merchant: 'Syngenta Seeds', amount: 8900, category: 'seeds', date: '2024-02-28', sku: 'SYN-WHT-AGRI-50LB' },
+    
+    // Fertilizer - Pre-planting application
+    { id: '4', merchant: 'Tractor Supply Co', amount: 12450, category: 'fertilizer', date: '2024-03-12', sku: 'TS-FERT-NPK-10-10-10-50LB' },
+    { id: '5', merchant: 'Rural King Supply', amount: 8750, category: 'fertilizer', date: '2024-03-15', sku: 'RK-UREA-46N-50LB' },
+    { id: '6', merchant: 'Farm & Fleet', amount: 6200, category: 'fertilizer', date: '2024-03-18', sku: 'FF-PHOS-0-46-0-50LB' },
+    
+    // Pesticides & Herbicides - Crop protection
+    { id: '7', merchant: 'Corteva Agriscience', amount: 11200, category: 'pesticides', date: '2024-03-20', sku: 'COR-ENLIST-2.5GAL' },
+    { id: '8', merchant: 'BASF Agricultural', amount: 6800, category: 'pesticides', date: '2024-03-22', sku: 'BAS-ENGENIA-2.5GAL' },
+    { id: '9', merchant: 'FMC Corporation', amount: 5400, category: 'pesticides', date: '2024-03-25', sku: 'FMC-INSECT-ACE-1GAL' },
+    
+    // Equipment & Parts - Maintenance and upgrades
+    { id: '10', merchant: 'John Deere Parts', amount: 15200, category: 'equipment', date: '2024-03-10', sku: 'JD-PLOW-DISC-8FT' },
+    { id: '11', merchant: 'Case IH Dealer', amount: 9800, category: 'equipment', date: '2024-03-14', sku: 'CIH-PLANTER-ROW-12' },
+    { id: '12', merchant: 'New Holland Parts', amount: 4200, category: 'equipment', date: '2024-03-16', sku: 'NH-HARROW-DISC-10FT' },
+    { id: '13', merchant: 'Tractor Supply Co', amount: 1850, category: 'equipment', date: '2024-03-19', sku: 'TS-HYDRAULIC-HOSE-3/4' },
+    
+    // Fuel - Diesel for tractors and equipment
+    { id: '14', merchant: 'Shell Fuel Station', amount: 3200, category: 'fuel', date: '2024-03-11', sku: 'SHELL-DIESEL-200GAL' },
+    { id: '15', merchant: 'Chevron Farm Co-op', amount: 2800, category: 'fuel', date: '2024-03-13', sku: 'CHEV-DIESEL-175GAL' },
+    { id: '16', merchant: 'Local Farm Co-op', amount: 2400, category: 'fuel', date: '2024-03-17', sku: 'COOP-DIESEL-150GAL' },
+    
+    // Other supplies
+    { id: '17', merchant: 'Tractor Supply Co', amount: 1200, category: 'other', date: '2024-03-21', sku: 'TS-FENCING-WIRE-500FT' },
+    { id: '18', merchant: 'Farm & Fleet', amount: 850, category: 'other', date: '2024-03-23', sku: 'FF-LIVESTOCK-FEED-50LB' },
 ]
+
+// Helper functions (defined outside component to avoid dependency issues)
+const categorizeTransaction = (txn: any): string => {
+  // Categorize based on merchant name or SKU
+  const merchant = (txn.merchant || '').toLowerCase()
+  const sku = (txn.sku || txn.sku_data?.sku || '').toLowerCase()
+  
+  if (merchant.includes('seed') || sku.includes('seed') || sku.includes('corn') || sku.includes('soy')) {
+    return 'seeds'
+  }
+  if (merchant.includes('fert') || sku.includes('fert') || sku.includes('npk') || sku.includes('urea')) {
+    return 'fertilizer'
+  }
+  if (merchant.includes('pest') || merchant.includes('chem') || sku.includes('herb') || sku.includes('pest')) {
+    return 'pesticides'
+  }
+  if (merchant.includes('fuel') || merchant.includes('gas') || merchant.includes('shell') || sku.includes('diesel')) {
+    return 'fuel'
+  }
+  if (merchant.includes('deere') || merchant.includes('tractor') || merchant.includes('equipment')) {
+    return 'equipment'
+  }
+  return 'other'
+}
+
+const calculateAnalysis = (txns: Transaction[]): SpendingAnalysis => {
+  const categories = {
+    fertilizer: 0,
+    seeds: 0,
+    equipment: 0,
+    fuel: 0,
+    pesticides: 0,
+    other: 0,
+  }
+
+  txns.forEach(txn => {
+    const cat = txn.category as keyof typeof categories
+    if (categories.hasOwnProperty(cat)) {
+      categories[cat] += txn.amount
+    } else {
+      categories.other += txn.amount
+    }
+  })
+
+  const totalSpent = Object.values(categories).reduce((sum, val) => sum + val, 0)
+  
+  // Compare with regenerative savings from EcoWallet
+  const regenerativeSavings = 31000 // From EcoWallet component
+  const netProfit = regenerativeSavings - totalSpent
+
+  const recommendations: string[] = []
+  if (categories.fertilizer > 0) {
+    recommendations.push(`You spent $${categories.fertilizer.toLocaleString()} on fertilizer. Cover crops can eliminate this cost entirely.`)
+  }
+  if (categories.pesticides > 0) {
+    recommendations.push(`Pesticide spending: $${categories.pesticides.toLocaleString()}. Healthy soil reduces pest pressure naturally.`)
+  }
+  if (categories.fuel > 0) {
+    recommendations.push(`Fuel costs: $${categories.fuel.toLocaleString()}. No-till practices can reduce tractor passes by 60%.`)
+  }
+  if (netProfit < 0) {
+    recommendations.push(`⚠️ You're spending more than you're saving. Focus on eliminating fertilizer and pesticide costs first.`)
+  } else {
+    recommendations.push(`✅ Net profit: $${netProfit.toLocaleString()} from regenerative practices!`)
+  }
+
+  return {
+    totalSpent,
+    categories,
+    savings: regenerativeSavings,
+    netProfit,
+    recommendations,
+  }
+}
 
 export default function SpendingTracker() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [analysis, setAnalysis] = useState<SpendingAnalysis | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [knotConnected, setKnotConnected] = useState(false)
-
-  const fetchTransactions = useCallback(async () => {
-    setLoading(true)
-    try {
-      // Call our API route which integrates with Knot
-      const response = await fetch('/api/knot-transactions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          merchant_id: 44, // Can be dynamic based on user selection
-          external_user_id: 'farmer-123',
-          limit: 10,
-        }),
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        // Map Knot transaction format to our Transaction interface
-        const mappedTransactions = data.transactions?.map((txn: any) => ({
-          id: txn.id,
-          merchant: txn.merchant || 'Unknown',
-          amount: txn.amount || 0,
-          category: categorizeTransaction(txn),
-          date: txn.date || new Date().toISOString(),
-          sku: txn.sku || txn.sku_data?.sku,
-        })) || mockTransactions
-        
-        setTransactions(mappedTransactions)
-        calculateAnalysis(mappedTransactions)
-      } else {
-        // Fallback to mock data if API fails
-        setTransactions(mockTransactions)
-        calculateAnalysis(mockTransactions)
-      }
-    } catch (error) {
-      console.error('Error fetching transactions:', error)
-      // Fallback to mock data
-      setTransactions(mockTransactions)
-      calculateAnalysis(mockTransactions)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
 
   useEffect(() => {
-    // Fetch transactions from Knot API
-    if (knotConnected) {
-      fetchTransactions()
-    }
-  }, [knotConnected, fetchTransactions])
-
-  const categorizeTransaction = (txn: any): string => {
-    // Categorize based on merchant name or SKU
-    const merchant = (txn.merchant || '').toLowerCase()
-    const sku = (txn.sku || txn.sku_data?.sku || '').toLowerCase()
-    
-    if (merchant.includes('seed') || sku.includes('seed') || sku.includes('corn') || sku.includes('soy')) {
-      return 'seeds'
-    }
-    if (merchant.includes('fert') || sku.includes('fert') || sku.includes('npk') || sku.includes('urea')) {
-      return 'fertilizer'
-    }
-    if (merchant.includes('pest') || merchant.includes('chem') || sku.includes('herb') || sku.includes('pest')) {
-      return 'pesticides'
-    }
-    if (merchant.includes('fuel') || merchant.includes('gas') || merchant.includes('shell') || sku.includes('diesel')) {
-      return 'fuel'
-    }
-    if (merchant.includes('deere') || merchant.includes('tractor') || merchant.includes('equipment')) {
-      return 'equipment'
-    }
-    return 'other'
-  }
-
-  const calculateAnalysis = (txns: Transaction[]) => {
-    const categories = {
-      fertilizer: 0,
-      seeds: 0,
-      equipment: 0,
-      fuel: 0,
-      pesticides: 0,
-      other: 0,
-    }
-
-    txns.forEach(txn => {
-      const cat = txn.category as keyof typeof categories
-      if (categories.hasOwnProperty(cat)) {
-        categories[cat] += txn.amount
-      } else {
-        categories.other += txn.amount
-      }
-    })
-
-    const totalSpent = Object.values(categories).reduce((sum, val) => sum + val, 0)
-    
-    // Compare with regenerative savings from EcoWallet
-    const regenerativeSavings = 31000 // From EcoWallet component
-    const netProfit = regenerativeSavings - totalSpent
-
-    const recommendations: string[] = []
-    if (categories.fertilizer > 0) {
-      recommendations.push(`You spent $${categories.fertilizer.toLocaleString()} on fertilizer. Cover crops can eliminate this cost entirely.`)
-    }
-    if (categories.pesticides > 0) {
-      recommendations.push(`Pesticide spending: $${categories.pesticides.toLocaleString()}. Healthy soil reduces pest pressure naturally.`)
-    }
-    if (categories.fuel > 0) {
-      recommendations.push(`Fuel costs: $${categories.fuel.toLocaleString()}. No-till practices can reduce tractor passes by 60%.`)
-    }
-    if (netProfit < 0) {
-      recommendations.push(`⚠️ You're spending more than you're saving. Focus on eliminating fertilizer and pesticide costs first.`)
-    } else {
-      recommendations.push(`✅ Net profit: $${netProfit.toLocaleString()} from regenerative practices!`)
-    }
-
-    setAnalysis({
-      totalSpent,
-      categories,
-      savings: regenerativeSavings,
-      netProfit,
-      recommendations,
-    })
-  }
-
-  const handleConnectKnot = async () => {
-    setLoading(true)
-    
-    // Knot SDK Integration (for production)
-    // The Knot SDK would be used here for real account linking
-    // For hackathon demo, we simulate the connection and fetch from API
-    
-    // Real implementation would be:
-    // 1. Initialize Knot SDK with clientId
-    // 2. Call linkAccount() to open Knot UI
-    // 3. Handle onSuccess callback to get merchant_id
-    // 4. Use merchant_id to sync transactions
-    
-    // For now, we simulate connection and fetch transactions
-    // This demonstrates the full flow including SKU data usage
-    
-    try {
-      // Simulate SDK connection flow
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // After "connecting", fetch transactions (which will use real Knot API if available)
-      setKnotConnected(true)
-      await fetchTransactions()
-    } catch (error) {
-      console.error('Error connecting Knot account:', error)
-      setLoading(false)
-    }
-  }
+    // Load mock transaction data on mount
+    setTransactions(mockTransactions)
+    setAnalysis(calculateAnalysis(mockTransactions))
+  }, [])
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, string> = {
@@ -217,21 +164,10 @@ export default function SpendingTracker() {
           <p className="text-sm text-gray-600 mt-1">Track expenses and optimize profitability</p>
         </div>
         <div className="flex items-center space-x-3">
-          {knotConnected ? (
-            <div className="flex items-center space-x-2 text-green-600">
-              <CheckCircle className="h-5 w-5" />
-              <span className="text-sm font-medium">Knot Connected</span>
-            </div>
-          ) : (
-            <button
-              onClick={handleConnectKnot}
-              disabled={loading}
-              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
-            >
-              <ShoppingCart className="h-4 w-4" />
-              <span>Connect Knot Account</span>
-            </button>
-          )}
+          <div className="flex items-center space-x-2 text-gray-600">
+            <ShoppingCart className="h-5 w-5" />
+            <span className="text-sm font-medium">Demo Mode</span>
+          </div>
         </div>
       </div>
 
@@ -243,20 +179,13 @@ export default function SpendingTracker() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-800">Powered by Knot Transaction Link API</p>
-            <p className="text-xs text-gray-600">Automatically syncs transactions with SKU data from your agricultural suppliers</p>
-            {knotConnected && (
-              <p className="text-xs text-green-600 mt-1 font-medium">✓ Account linked and syncing</p>
-            )}
+            <p className="text-xs text-gray-600">Realistic farmer transaction data with SKU information from agricultural suppliers</p>
+            <p className="text-xs text-blue-600 mt-1 font-medium">📊 Demo data showing typical farm purchases</p>
           </div>
         </div>
       </div>
 
-      {loading && !analysis ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="text-gray-600 mt-2">Syncing transactions...</p>
-        </div>
-      ) : analysis ? (
+      {analysis ? (
         <>
           {/* Profit/Loss Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

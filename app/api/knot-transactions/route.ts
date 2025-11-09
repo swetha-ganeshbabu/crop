@@ -29,10 +29,11 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { merchant_id, external_user_id, cursor, limit = 10 } = body
 
-    // Knot API credentials (from hackathon instructions)
-    const KNOT_API_URL = 'https://knot.tunnel.tel/transactions/sync' // Using tunnel endpoint for hackathon
-    // Alternative: 'https://development.knotapi.com/transactions/sync'
-    const KNOT_AUTH = 'Basic ZGRhMDc3OGQtOTQ4Ni00N2Y4LWJkODAtNmYyNTEyZjliY2RiOjg4NGQ4NGU4NTUwNTRjMzJhOGUzOWQwOGZjZDk4NDVk'
+    // Knot API credentials (dev environment for better data)
+    const KNOT_API_URL = 'https://development.knotapi.com/transactions/sync'
+    const KNOT_CLIENT_ID = 'dda0778d-9486-47f8-bd80-6f2512f9bcdb'
+    const KNOT_SECRET = 'ff5e51b6dcf84a829898d37449cbc47a'
+    const KNOT_AUTH = `Basic ${Buffer.from(`${KNOT_CLIENT_ID}:${KNOT_SECRET}`).toString('base64')}`
 
     // Make actual API call to Knot
     try {

@@ -127,7 +127,33 @@ CAPITAL_ONE_API_KEY=your_capital_one_nessie_key_here
 
 ---
 
-### 6. **Chestnut Forty** (Unknown - Need Info)
+### 6. **Google Gemini API** (Optional)
+
+**Status**: Optional - has intelligent fallback analysis
+
+**What it does**: Analyzes dashboard sections and provides AI insights
+
+**How to get**:
+1. Go to [Google AI Studio](https://aistudio.google.com/)
+2. Sign in with Google account
+3. Click "Get API Key"
+4. Copy your API key
+
+**Add to `.env.local`**:
+```bash
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+**Where it's used**:
+- `/app/api/gemini/route.ts` - Content analysis
+- `InsightModal` component - Shows Gemini insights
+- Navigation headings - Opens modals with Gemini analysis
+
+**Fallback**: Uses intelligent context-aware analysis if not set
+
+---
+
+### 7. **Chestnut Forty** (Unknown - Need Info)
 
 **Status**: Unknown - need to ask what it actually is
 
@@ -244,6 +270,9 @@ USDA_API_KEY=                # Real agricultural statistics
 
 # Banking
 CAPITAL_ONE_API_KEY=         # Loan applications (Starter Kit)
+
+# AI Analysis
+GEMINI_API_KEY=              # Content analysis and insights (Navigation modals)
 
 # Infrastructure
 NEXT_PUBLIC_BASE_URL=        # For internal API calls (defaults to localhost:3000)

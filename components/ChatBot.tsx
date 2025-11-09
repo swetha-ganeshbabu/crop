@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Mic, MicOff, MessageCircle, Bot, User, Volume2, VolumeX } from 'lucide-react'
+import { Mic, MicOff, Bot, User, Volume2, VolumeX, X, MessageCircle, Minimize2 } from 'lucide-react'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -34,7 +34,9 @@ declare global {
   }
 }
 
-export default function VoiceAssistant() {
+export default function ChatBot() {
+  const [isOpen, setIsOpen] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [messages, setMessages] = useState<Message[]>([
@@ -47,11 +49,16 @@ export default function VoiceAssistant() {
   const [voiceEnabled, setVoiceEnabled] = useState(true)
   const recognitionRef = useRef<SpeechRecognition | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
 
   const speakWithElevenLabs = useCallback(async (text: string) => {
     setIsSpeaking(true)
     try {
-      // Try ElevenLabs API first (via our API route)
       const response = await fetch('/api/elevenlabs-tts', {
         method: 'POST',
         headers: {
@@ -59,14 +66,13 @@ export default function VoiceAssistant() {
         },
         body: JSON.stringify({
           text: text,
-          voice_id: '21m00Tcm4TlvDq8ikWAM', // Rachel voice - natural and clear
+          voice_id: '21m00Tcm4TlvDq8ikWAM',
         }),
       })
 
       if (response.ok) {
         const contentType = response.headers.get('content-type')
         
-        // If we got audio (ElevenLabs worked)
         if (contentType && contentType.includes('audio')) {
           const audioBlob = await response.blob()
           const audioUrl = URL.createObjectURL(audioBlob)
@@ -83,19 +89,16 @@ export default function VoiceAssistant() {
           }
           
           await audio.play()
-          return // Success - exit early
+          return
         }
         
-        // If not audio, it's a JSON response (API key not set)
         const data = await response.json()
         if (!data.success) {
           console.log('ElevenLabs not available, using Web Speech API fallback')
         }
       }
 
-      // Fallback to Web Speech API if ElevenLabs is not available
       if ('speechSynthesis' in window) {
-        // Cancel any ongoing speech
         window.speechSynthesis.cancel()
         
         const utterance = new SpeechSynthesisUtterance(text)
@@ -118,7 +121,6 @@ export default function VoiceAssistant() {
       }
     } catch (error) {
       console.error('Error with ElevenLabs:', error)
-      // Fallback to Web Speech API
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text)
         utterance.rate = 0.9
@@ -133,7 +135,6 @@ export default function VoiceAssistant() {
   }, [])
 
   const generateAIResponse = useCallback(async (userInput: string): Promise<{ text: string }> => {
-    // Try Dedalus API first, fallback to local logic
     try {
       const response = await fetch('/api/dedalus', {
         method: 'POST',
@@ -156,10 +157,8 @@ export default function VoiceAssistant() {
       console.log('Dedalus API not available, using local responses')
     }
 
-    // Fallback to local context-aware responses
     const input = userInput.toLowerCase()
 
-    // Context-aware responses based on user query
     if (input.includes('soil') || input.includes('health')) {
       return {
         text: "Your soil health is excellent! Your fungal-to-bacterial ratio is 0.8:1, which is great for regenerative farming. Your soil respiration is 125 ppm, showing high biological activity. I recommend continuing with cover crops and no-till practices to maintain this health.",
@@ -214,14 +213,12 @@ export default function VoiceAssistant() {
       }
     }
 
-    // Default response
     return {
       text: "I understand you're asking about regenerative farming. I can help you with soil health, carbon sequestration, water conservation, spending analysis, crop yields, biodiversity, and sustainability metrics. Could you be more specific about what you'd like to know?",
     }
   }, [])
 
   const handleUserMessage = useCallback(async (userText: string) => {
-    // Add user message
     const userMessage: Message = {
       role: 'user',
       content: userText,
@@ -229,10 +226,8 @@ export default function VoiceAssistant() {
     }
     setMessages(prev => [...prev, userMessage])
 
-    // Generate AI response based on context
     const response = await generateAIResponse(userText)
 
-    // Add assistant response
     const assistantMessage: Message = {
       role: 'assistant',
       content: response.text,
@@ -240,14 +235,12 @@ export default function VoiceAssistant() {
     }
     setMessages(prev => [...prev, assistantMessage])
 
-    // Use ElevenLabs for voice response
     if (voiceEnabled && response.text) {
       await speakWithElevenLabs(response.text)
     }
   }, [voiceEnabled, generateAIResponse, speakWithElevenLabs])
 
   useEffect(() => {
-    // Initialize Web Speech API for voice recognition
     if (typeof window !== 'undefined' && (window.webkitSpeechRecognition || window.SpeechRecognition)) {
       const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition
       if (SpeechRecognition) {
@@ -293,11 +286,9 @@ export default function VoiceAssistant() {
   const stopListening = () => {
     try {
       if (recognitionRef.current && isListening) {
-        // Force stop the recognition - try both stop() and abort()
         try {
           recognitionRef.current.stop()
         } catch (e) {
-          // If stop fails, try abort (some browsers use abort instead)
           if (recognitionRef.current.abort) {
             try {
               recognitionRef.current.abort()
@@ -306,156 +297,228 @@ export default function VoiceAssistant() {
             }
           }
         }
-        // Always update state to stop listening
         setIsListening(false)
       } else {
-        // If no recognition ref or not listening, just update state
         setIsListening(false)
       }
     } catch (error) {
       console.error('Error stopping recognition:', error)
-      // Always ensure state is updated even on error
       setIsListening(false)
     }
   }
 
+  // Always show floating button when closed
+  if (!isOpen) {
+    return (
+      <button
+        onClick={() => {
+          setIsOpen(true)
+          setIsMinimized(false)
+        }}
+        className="fixed bottom-6 right-6 z-50 bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 flex items-center justify-center group"
+        aria-label="Open chat"
+      >
+        <MessageCircle className="h-6 w-6" />
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+          <Bot className="h-3 w-3" />
+        </span>
+      </button>
+    )
+  }
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className="bg-green-600 p-2 rounded-full">
-            <Bot className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-800">Voice Assistant</h2>
-            <p className="text-sm text-gray-600">Your regenerative farming friend powered by ElevenLabs</p>
-          </div>
-        </div>
-        <button
-          onClick={() => setVoiceEnabled(!voiceEnabled)}
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          aria-label={voiceEnabled ? 'Disable voice' : 'Enable voice'}
-        >
-          {voiceEnabled ? (
-            <Volume2 className="h-5 w-5 text-green-600" />
-          ) : (
-            <VolumeX className="h-5 w-5 text-gray-400" />
-          )}
-        </button>
-      </div>
-
-      {/* ElevenLabs Badge */}
-      <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-l-4 border-purple-500">
-        <div className="flex items-center space-x-2">
-          <div className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-bold">
-            ELEVENLABS
-          </div>
-          <p className="text-xs text-gray-600">
-            Powered by ElevenLabs AI Voice • Natural conversation with your farming assistant
-          </p>
-        </div>
-      </div>
-
-      {/* Chat Messages */}
-      <div className="mb-4 h-64 overflow-y-auto border rounded-lg p-4 bg-gray-50 space-y-3">
-        {messages.map((message, index) => (
-          <div
-            key={index}
-            className={`flex items-start space-x-2 ${
-              message.role === 'user' ? 'justify-end' : 'justify-start'
-            }`}
-          >
-            {message.role === 'assistant' && (
-              <div className="bg-green-600 p-1 rounded-full">
-                <Bot className="h-4 w-4 text-white" />
-              </div>
-            )}
-            <div
-              className={`max-w-[80%] rounded-lg p-3 ${
-                message.role === 'user'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-800 border border-gray-200'
-              }`}
-            >
-              <p className="text-sm">{message.content}</p>
-              <p className="text-xs opacity-70 mt-1">
-                {message.timestamp.toLocaleTimeString()}
-              </p>
+    <>
+      {/* Chat Popup */}
+      <div
+        className={`
+          fixed bottom-6 right-6 z-50 bg-white rounded-lg shadow-2xl transition-all duration-300
+          ${isOpen && !isMinimized ? 'w-96 h-[600px]' : 'w-0 h-0 opacity-0 pointer-events-none'}
+          ${isMinimized ? 'w-80 h-16' : ''}
+          flex flex-col
+        `}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-green-600 to-emerald-700 text-white p-4 rounded-t-lg flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-white/20 p-2 rounded-full">
+              <Bot className="h-5 w-5" />
             </div>
-            {message.role === 'user' && (
-              <div className="bg-blue-600 p-1 rounded-full">
-                <User className="h-4 w-4 text-white" />
-              </div>
-            )}
+            <div>
+              <h3 className="font-bold">Voice Assistant</h3>
+              <p className="text-xs text-green-100">Powered by ElevenLabs</p>
+            </div>
           </div>
-        ))}
-      </div>
-
-      {/* Voice Controls */}
-      <div className="flex items-center space-x-3">
-        <button
-          onClick={isListening ? stopListening : startListening}
-          disabled={isSpeaking}
-          className={`flex-1 flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-colors ${
-            isListening
-              ? 'bg-red-600 text-white hover:bg-red-700'
-              : 'bg-green-600 text-white hover:bg-green-700'
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
-        >
-          {isListening ? (
-            <>
-              <MicOff className="h-5 w-5" />
-              <span>Stop Listening</span>
-            </>
-          ) : (
-            <>
-              <Mic className="h-5 w-5" />
-              <span>Tap to Talk</span>
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* Quick Questions */}
-      <div className="mt-4">
-        <p className="text-xs text-gray-600 mb-2">Try asking:</p>
-        <div className="flex flex-wrap gap-2">
-          {[
-            'How is my soil health?',
-            'What is my carbon impact?',
-            'How much water am I saving?',
-            'Show my spending analysis',
-            'What are my yield predictions?',
-          ].map((question, index) => (
+          <div className="flex items-center space-x-2">
             <button
-              key={index}
-              onClick={() => handleUserMessage(question)}
-              className="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-full transition-colors"
+              onClick={() => setVoiceEnabled(!voiceEnabled)}
+              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              aria-label={voiceEnabled ? 'Disable voice' : 'Enable voice'}
             >
-              {question}
+              {voiceEnabled ? (
+                <Volume2 className="h-4 w-4" />
+              ) : (
+                <VolumeX className="h-4 w-4" />
+              )}
             </button>
-          ))}
+            <button
+              onClick={() => {
+                setIsMinimized(!isMinimized)
+                if (isMinimized) setIsOpen(true)
+              }}
+              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              aria-label={isMinimized ? 'Expand' : 'Minimize'}
+            >
+              <Minimize2 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => {
+                setIsOpen(false)
+                setIsMinimized(false)
+              }}
+              className="p-2 hover:bg-white/20 rounded-full transition-colors"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+
+        {/* Chat Content - only show when not minimized */}
+        {!isMinimized && (
+          <>
+            {/* ElevenLabs Badge */}
+            <div className="px-4 pt-3 pb-2 bg-gradient-to-r from-purple-50 to-pink-50 border-b">
+              <div className="flex items-center space-x-2">
+                <div className="bg-purple-600 text-white px-2 py-1 rounded text-xs font-bold">
+                  ELEVENLABS
+                </div>
+                <p className="text-xs text-gray-600">
+                  Natural conversation with your farming assistant
+                </p>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex items-start space-x-2 ${
+                    message.role === 'user' ? 'justify-end' : 'justify-start'
+                  }`}
+                >
+                  {message.role === 'assistant' && (
+                    <div className="bg-green-600 p-1 rounded-full flex-shrink-0">
+                      <Bot className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                  <div
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      message.role === 'user'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-800 border border-gray-200'
+                    }`}
+                  >
+                    <p className="text-sm">{message.content}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {message.timestamp.toLocaleTimeString()}
+                    </p>
+                  </div>
+                  {message.role === 'user' && (
+                    <div className="bg-blue-600 p-1 rounded-full flex-shrink-0">
+                      <User className="h-3 w-3 text-white" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Voice Controls */}
+            <div className="p-4 border-t bg-white">
+              <button
+                onClick={isListening ? stopListening : startListening}
+                disabled={isSpeaking}
+                className={`w-full flex items-center justify-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-colors ${
+                  isListening
+                    ? 'bg-red-600 text-white hover:bg-red-700'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isListening ? (
+                  <>
+                    <MicOff className="h-5 w-5" />
+                    <span>Stop Listening</span>
+                  </>
+                ) : (
+                  <>
+                    <Mic className="h-5 w-5" />
+                    <span>Tap to Talk</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Quick Questions */}
+            <div className="p-4 border-t bg-gray-50">
+              <p className="text-xs text-gray-600 mb-2">Try asking:</p>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  'How is my soil health?',
+                  'What is my carbon impact?',
+                  'How much water am I saving?',
+                  'Show my spending analysis',
+                  'What are my yield predictions?',
+                ].map((question, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleUserMessage(question)}
+                    className="text-xs bg-white hover:bg-gray-100 border border-gray-200 px-3 py-1 rounded-full transition-colors"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Status Indicator */}
+            {(isListening || isSpeaking) && (
+              <div className="px-4 pb-2 flex items-center space-x-2 text-xs text-gray-600">
+                {isListening && (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    <span>Listening...</span>
+                  </div>
+                )}
+                {isSpeaking && (
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <span>Speaking...</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
       </div>
 
-      {/* Status Indicator */}
-      {(isListening || isSpeaking) && (
-        <div className="mt-3 flex items-center space-x-2 text-sm text-gray-600">
-          {isListening && (
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
-              <span>Listening...</span>
-            </div>
-          )}
-          {isSpeaking && (
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>Speaking...</span>
-            </div>
-          )}
-        </div>
+      {/* Floating Button - show when minimized */}
+      {isMinimized && (
+        <button
+          onClick={() => {
+            setIsOpen(true)
+            setIsMinimized(false)
+          }}
+          className="fixed bottom-6 right-6 z-50 bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-2xl transition-all duration-300 hover:scale-110 flex items-center justify-center"
+          aria-label="Open chat"
+        >
+          <MessageCircle className="h-6 w-6" />
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+            <Bot className="h-3 w-3" />
+          </span>
+        </button>
       )}
-    </div>
+    </>
   )
 }
 

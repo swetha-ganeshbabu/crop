@@ -10,11 +10,25 @@ interface NavigationProps {
     farmName: string
     email: string
   } | null
+  onSectionClick?: (section: string) => void
 }
 
-export default function Navigation({ user }: NavigationProps) {
+export default function Navigation({ user, onSectionClick }: NavigationProps) {
   const router = useRouter()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
+  const handleSectionClick = (section: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    if (onSectionClick) {
+      onSectionClick(section)
+    } else {
+      // Fallback to anchor link
+      const element = document.getElementById(section.replace('#', ''))
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+      }
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('farmer_user')
@@ -32,21 +46,7 @@ export default function Navigation({ user }: NavigationProps) {
           </div>
           
           <div className="hidden md:flex items-center space-x-6">
-            <a href="#dashboard" className="text-gray-700 hover:text-primary-600 font-medium">
-              Dashboard
-            </a>
-            <a href="#farm-map" className="text-gray-700 hover:text-primary-600 font-medium">
-              Farm Map
-            </a>
-            <a href="#predictions" className="text-gray-700 hover:text-primary-600 font-medium">
-              Predictions
-            </a>
-            <a href="#soil-health" className="text-gray-700 hover:text-primary-600 font-medium">
-              Soil Health
-            </a>
-            <a href="#advice" className="text-gray-700 hover:text-primary-600 font-medium">
-              Planting Advice
-            </a>
+            {/* Navigation items moved to sidebar - keeping other links */}
             <a href="/marketplace" className="text-gray-700 hover:text-primary-600 font-medium">
               Marketplace
             </a>
@@ -87,21 +87,7 @@ export default function Navigation({ user }: NavigationProps) {
 
         {mobileMenuOpen && (
           <div className="md:hidden py-4 space-y-2">
-            <a href="#dashboard" className="block text-gray-700 hover:text-primary-600 font-medium">
-              Dashboard
-            </a>
-            <a href="#farm-map" className="block text-gray-700 hover:text-primary-600 font-medium">
-              Farm Map
-            </a>
-            <a href="#predictions" className="block text-gray-700 hover:text-primary-600 font-medium">
-              Predictions
-            </a>
-            <a href="#soil-health" className="block text-gray-700 hover:text-primary-600 font-medium">
-              Soil Health
-            </a>
-            <a href="#advice" className="block text-gray-700 hover:text-primary-600 font-medium">
-              Planting Advice
-            </a>
+            {/* Navigation items moved to sidebar */}
             <a href="/marketplace" className="block text-gray-700 hover:text-primary-600 font-medium">
               Marketplace
             </a>

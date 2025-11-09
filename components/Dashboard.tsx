@@ -19,7 +19,6 @@ import SpendingTracker from './SpendingTracker'
 import SustainabilityOverview from './SustainabilityOverview'
 import WaterConservation from './WaterConservation'
 import ClimateImpact from './ClimateImpact'
-import VoiceAssistant from './VoiceAssistant'
 
 interface DashboardProps {
   alerts: string[]
@@ -29,9 +28,10 @@ interface DashboardProps {
     acres?: number
     crops?: string[]
   } | null
+  onSectionClick?: (section: string) => void
 }
 
-export default function Dashboard({ alerts, user }: DashboardProps) {
+export default function Dashboard({ alerts, user, onSectionClick }: DashboardProps) {
   // Initialize with user data or mock data
   const [farmData, setFarmData] = useState<any>(() => ({
     crops: user?.crops || ['Corn', 'Soybeans', 'Wheat'],
@@ -57,10 +57,12 @@ export default function Dashboard({ alerts, user }: DashboardProps) {
       })
   }, [])
 
-  return (
-    <div className="space-y-6">
-      {/* Welcome Section - Sustainability Focus */}
-      <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-lg shadow-lg p-6 text-white">
+      return (
+        <div className="space-y-6">
+          {/* Dashboard Overview Section */}
+          <div id="dashboard-overview">
+            {/* Welcome Section - Sustainability Focus */}
+            <div className="bg-gradient-to-r from-green-600 to-emerald-700 rounded-lg shadow-lg p-6 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">
@@ -103,29 +105,28 @@ export default function Dashboard({ alerts, user }: DashboardProps) {
 
       {/* Weather Widget */}
       <WeatherWidget />
+      </div>
 
       {/* Farm Map - Aerial View with Irrigation Indicators */}
       <div id="farm-map">
-        <AerialFarmMap />
+        <AerialFarmMap onReadAloud={() => onSectionClick?.('farm-map')} />
       </div>
 
-      {/* Voice Assistant - Farmer's Best Friend */}
-      <VoiceAssistant />
 
       {/* AI Mentor - Gabe Brown's Principles */}
       <AIMentor />
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Crop Yield Predictions */}
-        <div id="predictions">
-          <CropYieldPrediction />
-        </div>
+            {/* Crop Yield Predictions */}
+            <div id="predictions">
+              <CropYieldPrediction onReadAloud={() => onSectionClick?.('predictions')} />
+            </div>
 
-        {/* Soil Health */}
-        <div id="soil-health">
-          <SoilHealth />
-        </div>
+            {/* Soil Health */}
+            <div id="soil-health">
+              <SoilHealth onReadAloud={() => onSectionClick?.('soil-health')} />
+            </div>
       </div>
 
       {/* Climate & Environmental Impact */}
@@ -155,10 +156,10 @@ export default function Dashboard({ alerts, user }: DashboardProps) {
       {/* Biodiversity Metrics - Full Width */}
       <BiodiversityMetrics />
 
-      {/* Planting Advice - Full Width */}
-      <div id="advice">
-        <PlantingAdvice />
-      </div>
+          {/* Planting Advice - Full Width */}
+          <div id="advice">
+            <PlantingAdvice onReadAloud={() => onSectionClick?.('advice')} />
+          </div>
     </div>
   )
 }

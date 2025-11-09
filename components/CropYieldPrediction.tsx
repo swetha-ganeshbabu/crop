@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
-import { TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react'
+import { TrendingUp, AlertTriangle, CheckCircle, Volume2 } from 'lucide-react'
 
-export default function CropYieldPrediction() {
+interface CropYieldPredictionProps {
+  onReadAloud?: () => void
+}
+
+export default function CropYieldPrediction({ onReadAloud }: CropYieldPredictionProps = {}) {
   const [predictions, setPredictions] = useState<any>(() => {
     // Initialize with mock data immediately
     return {
@@ -100,7 +104,18 @@ export default function CropYieldPrediction() {
             </p>
           )}
         </div>
-        <CheckCircle className="h-6 w-6 text-green-600" />
+        <div className="flex items-center space-x-2">
+          {onReadAloud && (
+            <button
+              onClick={onReadAloud}
+              className="p-2 bg-green-100 hover:bg-green-200 rounded-lg transition-colors"
+              title="Read insights with Gemini + ElevenLabs"
+            >
+              <Volume2 className="h-5 w-5 text-green-600" />
+            </button>
+          )}
+          <CheckCircle className="h-6 w-6 text-green-600" />
+        </div>
       </div>
 
       {/* Crop Comparison */}
