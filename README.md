@@ -39,7 +39,6 @@ Crop It combines cutting-edge AI technology with real-world agricultural data to
 ### 🌤️ Real-Time Data
 - **Weather Integration**: Current conditions and 4-day forecasts via Weather.gov
 - **Marketplace Analysis**: Price scraping and competitive intelligence via Amazon Nova Act
-- **Chestnut Forty Integration**: Advanced ML-based yield predictions
 
 ### 🎨 User Experience
 - **Modern Dashboard**: Clean, intuitive interface with real-time visualizations
@@ -63,37 +62,117 @@ Crop It combines cutting-edge AI technology with real-world agricultural data to
 - **date-fns** - Date manipulation and formatting
 - **knotapi-js** - Knot Transaction Link SDK
 
+## 🏗️ System Architecture
+
+```mermaid
+graph TB
+    subgraph "User Interfaces"
+        WEB[Web Dashboard<br/>Next.js Frontend]
+        VOICE[Voice Assistant<br/>Speech Interface]
+        IMESSAGE[iMessage<br/>SMS Integration]
+    end
+    
+    subgraph "Crop It Application"
+        API[API Routes<br/>Next.js Backend]
+        AI[AI Response Engine<br/>lib/ai-response.ts]
+        COMP[React Components<br/>Dashboard, Charts, etc.]
+    end
+    
+    subgraph "AI Services"
+        DEDALUS[Dedalus AI<br/>Primary AI]
+        GEMINI[Google Gemini<br/>Enhanced AI]
+        ELEVEN[ElevenLabs<br/>TTS/STT]
+    end
+    
+    subgraph "Financial Services"
+        KNOT[Knot API<br/>Transaction Linking]
+        CAPONE[Capital One<br/>Banking Services]
+    end
+    
+    subgraph "Agricultural Data"
+        USDA[USDA API<br/>Agricultural Datasets]
+        WEATHER[Weather.gov<br/>Weather Data]
+    end
+    
+    subgraph "Market Intelligence"
+        NOVA[Amazon Nova Act<br/>Price Scraping]
+    end
+    
+    WEB --> API
+    VOICE --> API
+    IMESSAGE --> API
+    
+    API --> AI
+    API --> COMP
+    
+    AI --> DEDALUS
+    AI --> GEMINI
+    API --> ELEVEN
+    
+    API --> KNOT
+    API --> CAPONE
+    
+    API --> USDA
+    API --> WEATHER
+    
+    API --> NOVA
+    
+    COMP --> WEB
+    
+    style WEB fill:#4ade80
+    style VOICE fill:#4ade80
+    style IMESSAGE fill:#4ade80
+    style API fill:#60a5fa
+    style AI fill:#a78bfa
+    style DEDALUS fill:#fbbf24
+    style GEMINI fill:#fbbf24
+    style ELEVEN fill:#fbbf24
+    style KNOT fill:#34d399
+    style CAPONE fill:#34d399
+    style USDA fill:#22d3ee
+    style WEATHER fill:#22d3ee
+    style NOVA fill:#f472b6
+```
+
+### Data Flow
+
+1. **User Input** → Web/Voice/iMessage interfaces
+2. **API Routes** → Process requests and route to appropriate services
+3. **AI Engine** → Generates intelligent responses using Dedalus/Gemini
+4. **External APIs** → Fetch real-time data (weather, USDA, financial)
+5. **Components** → Render data visualizations and insights
+6. **User Dashboard** → Display comprehensive farm intelligence
+
 ## 🔌 APIs & Integrations
 
 ### AI Services
-| Service | Purpose | Status |
-|---------|---------|--------|
-| **Dedalus AI** | Primary AI for intelligent responses | ✅ Integrated |
-| **Google Gemini** | Enhanced AI capabilities and insights | ✅ Integrated |
-| **ElevenLabs** | Natural voice synthesis (TTS/STT) | ✅ Integrated |
+| Service | Purpose |
+|---------|---------|
+| **Dedalus AI** | Primary AI for intelligent responses |
+| **Google Gemini** | Enhanced AI capabilities and insights |
+| **ElevenLabs** | Natural voice synthesis (TTS/STT) |
 
 ### Financial Services
-| Service | Purpose | Status |
-|---------|---------|--------|
-| **Knot API** | Transaction linking and bank account integration | ✅ Integrated |
-| **Capital One Nessie API** | Banking services and loan information | ✅ Integrated |
+| Service | Purpose |
+|---------|---------|
+| **Knot API** | Transaction linking and bank account integration |
+| **Capital One Nessie API** | Banking services and loan information |
 
 ### Agricultural Data
-| Service | Purpose | Status |
-|---------|---------|--------|
-| **USDA API** | Official agricultural datasets | ✅ Integrated |
-| **Weather.gov API** | Real-time weather data and forecasts | ✅ Integrated |
-| **Chestnut Forty** | ML-based crop yield predictions | ✅ Integrated |
+| Service | Purpose |
+|---------|---------|
+| **USDA API** | Official agricultural datasets |
+| **Weather.gov API** | Real-time weather data and forecasts |
 
 ### Market Intelligence
-| Service | Purpose | Status |
-|---------|---------|--------|
-| **Amazon Nova Act** | Price scraping and market analysis | ✅ Integrated |
+| Service | Purpose |
+|---------|---------|
+| **Amazon Nova Act** | Price scraping and market analysis |
 
 ### Communication
-| Service | Purpose | Status |
-|---------|---------|--------|
-| **iMessage Integration** | SMS/chat interface for farm queries | ✅ Integrated |
+| Service | Purpose |
+|---------|---------|
+| **iMessage Integration** | SMS/chat interface for farm queries |
 
 ## 📁 Project Structure
 
@@ -113,7 +192,6 @@ crop-it/
 │   │   │   └── loans/           # Loan information
 │   │   ├── usda-data/            # USDA agricultural data
 │   │   ├── weather/               # Weather.gov integration
-│   │   ├── chestnut-forty/       # Yield predictions
 │   │   ├── amazon-nova/          # Price scraping
 │   │   ├── marketplace-analysis/ # Market insights
 │   │   ├── yield-prediction/    # Crop yield forecasts
@@ -183,8 +261,6 @@ USDA_API_KEY=your_usda_api_key
 
 # Market Intelligence (Optional)
 AMAZON_NOVA_API_KEY=your_nova_api_key
-CHESTNUT_FORTY_API_URL=your_chestnut_forty_url
-CHESTNUT_FORTY_API_KEY=your_chestnut_forty_key
 
 # Application
 NEXT_PUBLIC_BASE_URL=http://localhost:3000
@@ -249,7 +325,6 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 - `GET /api/planting-advice` - Planting and harvesting recommendations
 - `GET /api/usda-data` - USDA agricultural datasets
 - `GET /api/weather` - Weather data and forecasts
-- `POST /api/chestnut-forty` - Advanced yield predictions
 
 ### Market Intelligence
 - `POST /api/amazon-nova` - Price scraping and market analysis
@@ -281,7 +356,7 @@ Comprehensive soil analysis including:
 - **Historical Trends**: Track changes over time
 
 ### Crop Yield Predictions
-- **ML-Based Forecasting**: Advanced predictions using Chestnut Forty
+- **Advanced Forecasting**: ML-based predictions with historical data
 - **Historical Comparisons**: Compare with previous years
 - **Weather Integration**: Factor in weather patterns
 - **Optimal Timing**: Best planting and harvesting windows
@@ -341,7 +416,6 @@ npm run check-all # Lint and build
 - **USDA** - Agricultural data
 - **Weather.gov** - Weather information
 - **Amazon Nova Act** - Price scraping
-- **Chestnut Forty** - Yield predictions
 
 ## 🚧 Future Enhancements
 
