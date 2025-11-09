@@ -28,7 +28,7 @@ function FormattedRecommendation({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false)
   
   // Parse the recommendation text into structured sections
-  const parseRecommendation = (text: string) => {
+  const parseRecommendation = (text: string): { title?: string; type: 'summary' | 'list' | 'paragraph' | 'checklist'; content: string[] }[] => {
     const sections: { title?: string; type: 'summary' | 'list' | 'paragraph' | 'checklist'; content: string[] }[] = []
     
     // Split by double newlines or section patterns
