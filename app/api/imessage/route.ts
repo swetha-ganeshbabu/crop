@@ -45,6 +45,9 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     
+    // Debug logging
+    console.log('[iMessage] Received request body:', JSON.stringify(body, null, 2).substring(0, 500))
+    
     // Support multiple request formats
     let message: string | undefined
     let userId: string | undefined
@@ -56,28 +59,40 @@ export async function POST(request: Request) {
       message = body.message.text
       userId = body.message.sender || body.message.senderName || body.userId
       phoneNumber = body.message.sender
+      console.log('[iMessage] Matched format: body.message.text')
     } else if (body.message && typeof body.message === 'string') {
       // Simple format: {message: "..."}
       message = body.message
       userId = body.userId || body.user
       phoneNumber = body.phoneNumber || body.phone
+      console.log('[iMessage] Matched format: body.message (string)')
     } else if (body.text) {
       message = body.text
       userId = body.userId || body.user
       phoneNumber = body.phoneNumber || body.phone
+      console.log('[iMessage] Matched format: body.text')
     } else if (body.body) {
       message = body.body
       userId = body.from || body.userId || body.user
       phoneNumber = body.phoneNumber || body.phone
+      console.log('[iMessage] Matched format: body.body')
     } else if (typeof body === 'string') {
       // Handle plain string body
       message = body
+      console.log('[iMessage] Matched format: plain string')
+    } else {
+      console.log('[iMessage] No format matched. Body keys:', Object.keys(body))
+      if (body.message) {
+        console.log('[iMessage] body.message type:', typeof body.message, 'value:', body.message)
+      }
     }
 
     // Validate input
     if (!message || typeof message !== 'string') {
+      console.error('[iMessage] Validation failed. Message:', message, 'Type:', typeof message)
+      console.error('[iMessage] Full body:', JSON.stringify(body, null, 2))
       return NextResponse.json(
-        { error: 'Message is required. Supported formats: {message: string}, {text: string}, or {body: string}' },
+        { error: 'Message is required. Supported formats: {message: {text: string}}, {message: string}, {text: string}, or {body: string}' },
         { status: 400 }
       )
     }
