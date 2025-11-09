@@ -207,97 +207,7 @@ export default function TransactionsPage() {
     }
   }, [router])
 
-  const fetchTransactions = useCallback(async () => {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/knot-transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          merchant_id: typeof window !== 'undefined' ? parseInt(localStorage.getItem('knot_merchant_id') || '44') : 44,
-          external_user_id: user?.email || 'farmer-123',
-          limit: 50,
-        }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        const mappedTransactions = data.transactions?.map((txn: any) => ({
-          id: txn.id,
-          merchant: txn.merchant || 'Unknown',
-          amount: txn.amount || 0,
-          category: txn.category || 'other',
-          date: txn.date || new Date().toISOString(),
-          sku: txn.sku || txn.sku_data?.sku,
-          productName: txn.sku_data?.products?.[0]?.name,
-        })) || []
-
-        setTransactions(mappedTransactions)
-        await analyzeTransactions(mappedTransactions)
-      } else {
-        // Use mock data
-        const mockTransactions = getMockTransactions()
-        setTransactions(mockTransactions)
-        await analyzeTransactions(mockTransactions)
-      }
-    } catch (error) {
-      console.error('Error fetching transactions:', error)
-      const mockTransactions = getMockTransactions()
-      setTransactions(mockTransactions)
-      await analyzeTransactions(mockTransactions)
-    } finally {
-      setLoading(false)
-    }
-  }, [user])
-
-  useEffect(() => {
-    if (user) {
-      fetchTransactions()
-    }
-  }, [user, fetchTransactions])
-
-  const getMockTransactions = (): Transaction[] => {
-    return [
-      // Seeds - Spring planting season
-      { id: '1', merchant: 'Pioneer Seeds', amount: 18450, category: 'seeds', date: '2024-03-05', sku: 'PIO-33M57-CORN-50LB', productName: 'Pioneer 33M57 Corn Hybrid Seed 50lb' },
-      { id: '2', merchant: 'Bayer CropScience', amount: 12400, category: 'seeds', date: '2024-03-08', sku: 'BAY-SOY-XB33A-50LB', productName: 'Bayer XB33A Soybean Seed 50lb' },
-      { id: '3', merchant: 'Syngenta Seeds', amount: 8900, category: 'seeds', date: '2024-02-28', sku: 'SYN-WHT-AGRI-50LB', productName: 'Syngenta AgriPro Wheat Seed 50lb' },
-      
-      // Fertilizer - Pre-planting and side-dress applications (more realistic farming data)
-      { id: '4', merchant: 'Tractor Supply Co', amount: 12450, category: 'fertilizer', date: '2024-03-12', sku: 'TS-FERT-NPK-10-10-10-50LB', productName: 'NPK 10-10-10 Balanced Fertilizer 50lb Bag' },
-      { id: '5', merchant: 'Rural King Supply', amount: 8750, category: 'fertilizer', date: '2024-03-15', sku: 'RK-UREA-46N-50LB', productName: 'Urea 46-0-0 Nitrogen Fertilizer 50lb Bag' },
-      { id: '6', merchant: 'Farm & Fleet', amount: 6200, category: 'fertilizer', date: '2024-03-18', sku: 'FF-PHOS-0-46-0-50LB', productName: 'Triple Super Phosphate 0-46-0 Fertilizer 50lb' },
-      { id: '19', merchant: 'Agrium Crop Nutrition', amount: 15200, category: 'fertilizer', date: '2024-04-02', sku: 'AGR-AMMONIUM-NITRATE-34-0-0', productName: 'Ammonium Nitrate 34-0-0 Fertilizer 50lb' },
-      { id: '20', merchant: 'Yara North America', amount: 11200, category: 'fertilizer', date: '2024-04-10', sku: 'YAR-POTASH-0-0-60-50LB', productName: 'Muriate of Potash 0-0-60 Fertilizer 50lb' },
-      { id: '21', merchant: 'Nutrien Ag Solutions', amount: 9800, category: 'fertilizer', date: '2024-04-15', sku: 'NUT-DAP-18-46-0-50LB', productName: 'Diammonium Phosphate DAP 18-46-0 50lb' },
-      { id: '22', merchant: 'Simplot Grower Solutions', amount: 13400, category: 'fertilizer', date: '2024-04-20', sku: 'SIM-MAP-11-52-0-50LB', productName: 'Monoammonium Phosphate MAP 11-52-0 50lb' },
-      { id: '23', merchant: 'CF Industries', amount: 8900, category: 'fertilizer', date: '2024-04-25', sku: 'CF-ANHYDROUS-AMMONIA-82-0-0', productName: 'Anhydrous Ammonia 82-0-0 Fertilizer Bulk' },
-      { id: '24', merchant: 'Tractor Supply Co', amount: 7200, category: 'fertilizer', date: '2024-05-01', sku: 'TS-LIME-AGRICULTURAL-50LB', productName: 'Agricultural Lime pH Amendment 50lb Bag' },
-      { id: '25', merchant: 'Rural King Supply', amount: 5600, category: 'fertilizer', date: '2024-05-05', sku: 'RK-MICRONUTRIENTS-ZN-MN-5LB', productName: 'Zinc & Manganese Micronutrient Mix 5lb' },
-      
-      // Pesticides & Herbicides - Crop protection
-      { id: '7', merchant: 'Corteva Agriscience', amount: 11200, category: 'pesticides', date: '2024-03-20', sku: 'COR-ENLIST-2.5GAL', productName: 'Enlist Duo Herbicide 2.5 Gallon' },
-      { id: '8', merchant: 'BASF Agricultural', amount: 6800, category: 'pesticides', date: '2024-03-22', sku: 'BAS-ENGENIA-2.5GAL', productName: 'Engenia Herbicide 2.5 Gallon' },
-      { id: '9', merchant: 'FMC Corporation', amount: 5400, category: 'pesticides', date: '2024-03-25', sku: 'FMC-INSECT-ACE-1GAL', productName: 'Acephate Insecticide 1 Gallon' },
-      
-      // Equipment & Parts - Maintenance and upgrades
-      { id: '10', merchant: 'John Deere Parts', amount: 15200, category: 'equipment', date: '2024-03-10', sku: 'JD-PLOW-DISC-8FT', productName: 'John Deere Disc Plow 8ft Attachment' },
-      { id: '11', merchant: 'Case IH Dealer', amount: 9800, category: 'equipment', date: '2024-03-14', sku: 'CIH-PLANTER-ROW-12', productName: 'Case IH 12-Row Planter Unit' },
-      { id: '12', merchant: 'New Holland Parts', amount: 4200, category: 'equipment', date: '2024-03-16', sku: 'NH-HARROW-DISC-10FT', productName: 'New Holland Disc Harrow 10ft' },
-      { id: '13', merchant: 'Tractor Supply Co', amount: 1850, category: 'equipment', date: '2024-03-19', sku: 'TS-HYDRAULIC-HOSE-3/4', productName: 'Hydraulic Hose 3/4" x 20ft' },
-      
-      // Fuel - Diesel for tractors and equipment
-      { id: '14', merchant: 'Shell Fuel Station', amount: 3200, category: 'fuel', date: '2024-03-11', sku: 'SHELL-DIESEL-200GAL', productName: 'Shell Diesel Fuel 200 Gallons' },
-      { id: '15', merchant: 'Chevron Farm Co-op', amount: 2800, category: 'fuel', date: '2024-03-13', sku: 'CHEV-DIESEL-175GAL', productName: 'Chevron Diesel Fuel 175 Gallons' },
-      { id: '16', merchant: 'Local Farm Co-op', amount: 2400, category: 'fuel', date: '2024-03-17', sku: 'COOP-DIESEL-150GAL', productName: 'Farm Co-op Diesel 150 Gallons' },
-      
-      // Other supplies
-      { id: '17', merchant: 'Tractor Supply Co', amount: 1200, category: 'other', date: '2024-03-21', sku: 'TS-FENCING-WIRE-500FT', productName: 'Farm Fencing Wire 500ft Roll' },
-      { id: '18', merchant: 'Farm & Fleet', amount: 850, category: 'other', date: '2024-03-23', sku: 'FF-LIVESTOCK-FEED-50LB', productName: 'Livestock Feed 50lb Bag' },
-    ]
-  }
-
-  const analyzeTransactions = async (txns: Transaction[]) => {
+  const analyzeTransactions = useCallback(async (txns: Transaction[]) => {
     const categoryMap: Record<string, { total: number; count: number; txns: Transaction[] }> = {}
 
     txns.forEach(txn => {
@@ -371,7 +281,98 @@ Keep the response concise and practical.`,
     )
 
     setInsights(insightsList)
+  }, [])
+
+  const fetchTransactions = useCallback(async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/knot-transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          merchant_id: typeof window !== 'undefined' ? parseInt(localStorage.getItem('knot_merchant_id') || '44') : 44,
+          external_user_id: user?.email || 'farmer-123',
+          limit: 50,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const mappedTransactions = data.transactions?.map((txn: any) => ({
+          id: txn.id,
+          merchant: txn.merchant || 'Unknown',
+          amount: txn.amount || 0,
+          category: txn.category || 'other',
+          date: txn.date || new Date().toISOString(),
+          sku: txn.sku || txn.sku_data?.sku,
+          productName: txn.sku_data?.products?.[0]?.name,
+        })) || []
+
+        setTransactions(mappedTransactions)
+        await analyzeTransactions(mappedTransactions)
+      } else {
+        // Use mock data
+        const mockTransactions = getMockTransactions()
+        setTransactions(mockTransactions)
+        await analyzeTransactions(mockTransactions)
+      }
+    } catch (error) {
+      console.error('Error fetching transactions:', error)
+      const mockTransactions = getMockTransactions()
+      setTransactions(mockTransactions)
+      await analyzeTransactions(mockTransactions)
+    } finally {
+      setLoading(false)
+    }
+  }, [user, analyzeTransactions])
+
+  useEffect(() => {
+    if (user) {
+      fetchTransactions()
+    }
+  }, [user, fetchTransactions])
+
+  const getMockTransactions = (): Transaction[] => {
+    return [
+      // Seeds - Spring planting season
+      { id: '1', merchant: 'Pioneer Seeds', amount: 18450, category: 'seeds', date: '2024-03-05', sku: 'PIO-33M57-CORN-50LB', productName: 'Pioneer 33M57 Corn Hybrid Seed 50lb' },
+      { id: '2', merchant: 'Bayer CropScience', amount: 12400, category: 'seeds', date: '2024-03-08', sku: 'BAY-SOY-XB33A-50LB', productName: 'Bayer XB33A Soybean Seed 50lb' },
+      { id: '3', merchant: 'Syngenta Seeds', amount: 8900, category: 'seeds', date: '2024-02-28', sku: 'SYN-WHT-AGRI-50LB', productName: 'Syngenta AgriPro Wheat Seed 50lb' },
+      
+      // Fertilizer - Pre-planting and side-dress applications (more realistic farming data)
+      { id: '4', merchant: 'Tractor Supply Co', amount: 12450, category: 'fertilizer', date: '2024-03-12', sku: 'TS-FERT-NPK-10-10-10-50LB', productName: 'NPK 10-10-10 Balanced Fertilizer 50lb Bag' },
+      { id: '5', merchant: 'Rural King Supply', amount: 8750, category: 'fertilizer', date: '2024-03-15', sku: 'RK-UREA-46N-50LB', productName: 'Urea 46-0-0 Nitrogen Fertilizer 50lb Bag' },
+      { id: '6', merchant: 'Farm & Fleet', amount: 6200, category: 'fertilizer', date: '2024-03-18', sku: 'FF-PHOS-0-46-0-50LB', productName: 'Triple Super Phosphate 0-46-0 Fertilizer 50lb' },
+      { id: '19', merchant: 'Agrium Crop Nutrition', amount: 15200, category: 'fertilizer', date: '2024-04-02', sku: 'AGR-AMMONIUM-NITRATE-34-0-0', productName: 'Ammonium Nitrate 34-0-0 Fertilizer 50lb' },
+      { id: '20', merchant: 'Yara North America', amount: 11200, category: 'fertilizer', date: '2024-04-10', sku: 'YAR-POTASH-0-0-60-50LB', productName: 'Muriate of Potash 0-0-60 Fertilizer 50lb' },
+      { id: '21', merchant: 'Nutrien Ag Solutions', amount: 9800, category: 'fertilizer', date: '2024-04-15', sku: 'NUT-DAP-18-46-0-50LB', productName: 'Diammonium Phosphate DAP 18-46-0 50lb' },
+      { id: '22', merchant: 'Simplot Grower Solutions', amount: 13400, category: 'fertilizer', date: '2024-04-20', sku: 'SIM-MAP-11-52-0-50LB', productName: 'Monoammonium Phosphate MAP 11-52-0 50lb' },
+      { id: '23', merchant: 'CF Industries', amount: 8900, category: 'fertilizer', date: '2024-04-25', sku: 'CF-ANHYDROUS-AMMONIA-82-0-0', productName: 'Anhydrous Ammonia 82-0-0 Fertilizer Bulk' },
+      { id: '24', merchant: 'Tractor Supply Co', amount: 7200, category: 'fertilizer', date: '2024-05-01', sku: 'TS-LIME-AGRICULTURAL-50LB', productName: 'Agricultural Lime pH Amendment 50lb Bag' },
+      { id: '25', merchant: 'Rural King Supply', amount: 5600, category: 'fertilizer', date: '2024-05-05', sku: 'RK-MICRONUTRIENTS-ZN-MN-5LB', productName: 'Zinc & Manganese Micronutrient Mix 5lb' },
+      
+      // Pesticides & Herbicides - Crop protection
+      { id: '7', merchant: 'Corteva Agriscience', amount: 11200, category: 'pesticides', date: '2024-03-20', sku: 'COR-ENLIST-2.5GAL', productName: 'Enlist Duo Herbicide 2.5 Gallon' },
+      { id: '8', merchant: 'BASF Agricultural', amount: 6800, category: 'pesticides', date: '2024-03-22', sku: 'BAS-ENGENIA-2.5GAL', productName: 'Engenia Herbicide 2.5 Gallon' },
+      { id: '9', merchant: 'FMC Corporation', amount: 5400, category: 'pesticides', date: '2024-03-25', sku: 'FMC-INSECT-ACE-1GAL', productName: 'Acephate Insecticide 1 Gallon' },
+      
+      // Equipment & Parts - Maintenance and upgrades
+      { id: '10', merchant: 'John Deere Parts', amount: 15200, category: 'equipment', date: '2024-03-10', sku: 'JD-PLOW-DISC-8FT', productName: 'John Deere Disc Plow 8ft Attachment' },
+      { id: '11', merchant: 'Case IH Dealer', amount: 9800, category: 'equipment', date: '2024-03-14', sku: 'CIH-PLANTER-ROW-12', productName: 'Case IH 12-Row Planter Unit' },
+      { id: '12', merchant: 'New Holland Parts', amount: 4200, category: 'equipment', date: '2024-03-16', sku: 'NH-HARROW-DISC-10FT', productName: 'New Holland Disc Harrow 10ft' },
+      { id: '13', merchant: 'Tractor Supply Co', amount: 1850, category: 'equipment', date: '2024-03-19', sku: 'TS-HYDRAULIC-HOSE-3/4', productName: 'Hydraulic Hose 3/4" x 20ft' },
+      
+      // Fuel - Diesel for tractors and equipment
+      { id: '14', merchant: 'Shell Fuel Station', amount: 3200, category: 'fuel', date: '2024-03-11', sku: 'SHELL-DIESEL-200GAL', productName: 'Shell Diesel Fuel 200 Gallons' },
+      { id: '15', merchant: 'Chevron Farm Co-op', amount: 2800, category: 'fuel', date: '2024-03-13', sku: 'CHEV-DIESEL-175GAL', productName: 'Chevron Diesel Fuel 175 Gallons' },
+      { id: '16', merchant: 'Local Farm Co-op', amount: 2400, category: 'fuel', date: '2024-03-17', sku: 'COOP-DIESEL-150GAL', productName: 'Farm Co-op Diesel 150 Gallons' },
+      
+      // Other supplies
+      { id: '17', merchant: 'Tractor Supply Co', amount: 1200, category: 'other', date: '2024-03-21', sku: 'TS-FENCING-WIRE-500FT', productName: 'Farm Fencing Wire 500ft Roll' },
+      { id: '18', merchant: 'Farm & Fleet', amount: 850, category: 'other', date: '2024-03-23', sku: 'FF-LIVESTOCK-FEED-50LB', productName: 'Livestock Feed 50lb Bag' },
+    ]
   }
+
 
   const generateFallbackRecommendation = (category: string, data: { total: number; count: number }): string => {
     if (category === 'fertilizer' && data.total > 50000) {

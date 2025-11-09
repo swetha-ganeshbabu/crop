@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { X, Volume2, VolumeX, Loader2, Sparkles, ArrowRight, ExternalLink } from 'lucide-react'
 
 interface InsightModalProps {
@@ -37,6 +37,30 @@ export default function InsightModal({ isOpen, onClose, section, content, contex
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+
+  const fetchInsights = useCallback(async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/gemini', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content,
+          section,
+          context,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setInsights(data)
+      }
+    } catch (error) {
+      console.error('Error fetching insights:', error)
+    } finally {
+      setLoading(false)
+    }
+  }, [content, section, context])
 
   useEffect(() => {
     if (isOpen && content) {
@@ -75,31 +99,7 @@ export default function InsightModal({ isOpen, onClose, section, content, contex
       }
       setIsSpeaking(false)
     }
-  }, [isOpen, section, audioUrl])
-
-  const fetchInsights = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          content,
-          section,
-          context,
-        }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setInsights(data)
-      }
-    } catch (error) {
-      console.error('Error fetching insights:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [isOpen, section, audioUrl, content, fetchInsights])
 
   const speakInsights = async () => {
     if (!insights) return

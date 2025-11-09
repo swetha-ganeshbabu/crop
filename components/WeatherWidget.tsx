@@ -115,7 +115,7 @@ export default function WeatherWidget() {
 
       {/* Forecast */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {weather.forecast.map((day: any, index) => {
+        {weather.forecast.map((day: any, index: number) => {
           const Icon = day.icon
           return (
             <div key={index} className="text-center">

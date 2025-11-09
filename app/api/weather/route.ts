@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+
 // Weather.gov API Integration (NOAA)
 // Free, no API key required - Government weather data
 // Fetches real-time weather data for farm locations

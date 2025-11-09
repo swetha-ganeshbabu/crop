@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+
 // USDA Data API Integration
 // Fetches real agricultural data from USDA NASS (National Agricultural Statistics Service)
 // and ERS (Economic Research Service) for crop yield predictions

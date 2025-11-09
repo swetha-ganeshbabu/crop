@@ -143,24 +143,6 @@ export default function SpendingTracker() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Check for existing Knot connection on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedMerchantId = localStorage.getItem('knot_merchant_id')
-      const storedSessionId = localStorage.getItem('knot_session_id')
-      if (storedMerchantId && storedSessionId) {
-        setKnotConnected(true)
-        setLinkedMerchantId(parseInt(storedMerchantId))
-        setKnotSessionId(storedSessionId)
-        fetchTransactionsWithMerchant(parseInt(storedMerchantId))
-      } else {
-        // Use mock data if not connected
-        setTransactions(mockTransactions)
-        setAnalysis(calculateAnalysis(mockTransactions))
-      }
-    }
-  }, [])
-
   // Fetch transactions from Knot API
   const fetchTransactionsWithMerchant = useCallback(async (merchantId: number) => {
     setLoading(true)
@@ -213,6 +195,24 @@ export default function SpendingTracker() {
       setLoading(false)
     }
   }, [])
+
+  // Check for existing Knot connection on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const storedMerchantId = localStorage.getItem('knot_merchant_id')
+      const storedSessionId = localStorage.getItem('knot_session_id')
+      if (storedMerchantId && storedSessionId) {
+        setKnotConnected(true)
+        setLinkedMerchantId(parseInt(storedMerchantId))
+        setKnotSessionId(storedSessionId)
+        fetchTransactionsWithMerchant(parseInt(storedMerchantId))
+      } else {
+        // Use mock data if not connected
+        setTransactions(mockTransactions)
+        setAnalysis(calculateAnalysis(mockTransactions))
+      }
+    }
+  }, [fetchTransactionsWithMerchant])
 
   // Create Knot session and open SDK
   const handleConnectKnot = useCallback(async () => {
