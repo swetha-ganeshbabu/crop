@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server'
 
+// Force dynamic rendering for this route
+export const dynamic = 'force-dynamic'
+
 // Enhanced Yield Prediction API
 // Now integrates USDA data and Chestnut Forty predictive intelligence
 export async function GET(request: Request) {
@@ -183,4 +186,3 @@ function estimateRainfallFromForecast(forecast: any[]): number {
   const estimatedRainfall = 20 + (rainyDays * 0.75)
   return Math.round(estimatedRainfall)
 }
-
