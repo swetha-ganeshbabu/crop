@@ -1,20 +1,22 @@
 declare module 'knotapi-js' {
-  export interface KnotConfig {
+  export interface CommonConfig {
     sessionId: string
     clientId: string
-    environment?: 'development' | 'production'
-    entryPoint?: string
+    environment: 'production' | 'sandbox' | 'development'
+    product: 'card_switcher' | 'transaction_link'
+    onSuccess?: (product: string, merchant: string) => void
+    onError?: (product: string, errorCode: string, message: string, payload: any) => void
+    onExit?: (product: string) => void
+    merchantIds?: number[]
     useCategories?: boolean
     useSearch?: boolean
-    merchantIds?: number[]
-    onSuccess?: (data: any) => void
-    onError?: (error: any) => void
-    onExit?: () => void
+    entryPoint?: string
+    mode?: 'headless' | 'ui'
   }
 
-  export class Knot {
-    static open(config: KnotConfig): void
-    static close(): void
+  export default class KnotapiJS {
+    constructor()
+    open(config: CommonConfig): void
   }
 }
 

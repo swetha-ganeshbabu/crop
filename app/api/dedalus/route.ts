@@ -36,9 +36,22 @@ export async function POST(request: Request) {
 
       if (response.ok) {
         const data = await response.json()
+        
+        // Extract the actual response text from Dedalus API
+        // Dedalus returns OpenAI-compatible format: choices[0].message.content
+        let finalOutput = ''
+        if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+          finalOutput = data.choices[0].message.content
+        } else if (data.final_output) {
+          finalOutput = data.final_output
+        } else if (typeof data === 'string') {
+          finalOutput = data
+        }
+        
         return NextResponse.json({
           success: true,
-          ...data,
+          final_output: finalOutput,
+          raw_response: data, // Include raw response for debugging
         })
       } else {
         // Fallback to mock if API fails

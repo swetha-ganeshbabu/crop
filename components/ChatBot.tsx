@@ -240,7 +240,32 @@ export default function ChatBot() {
     }
   }, [voiceEnabled, generateAIResponse, speakWithElevenLabs])
 
+  // ElevenLabs Speech-to-Text function
+  const transcribeWithElevenLabs = useCallback(async (audioBlob: Blob): Promise<string | null> => {
+    try {
+      const formData = new FormData()
+      formData.append('audio', audioBlob, 'recording.webm')
+
+      const response = await fetch('/api/elevenlabs-stt', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.success && data.text) {
+          return data.text
+        }
+      }
+      return null
+    } catch (error) {
+      console.error('ElevenLabs STT error:', error)
+      return null
+    }
+  }, [])
+
   useEffect(() => {
+    // Try to use ElevenLabs STT first, fallback to Web Speech API
     if (typeof window !== 'undefined' && (window.webkitSpeechRecognition || window.SpeechRecognition)) {
       const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition
       if (SpeechRecognition) {
@@ -271,8 +296,58 @@ export default function ChatBot() {
     }
   }, [handleUserMessage])
 
-  const startListening = () => {
+  const startListening = async () => {
     try {
+      // Try to use MediaRecorder for ElevenLabs STT
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          const mediaRecorder = new MediaRecorder(stream)
+          const audioChunks: Blob[] = []
+
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              audioChunks.push(event.data)
+            }
+          }
+
+          mediaRecorder.onstop = async () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' })
+            stream.getTracks().forEach(track => track.stop())
+            
+            // Try ElevenLabs STT first
+            const transcript = await transcribeWithElevenLabs(audioBlob)
+            if (transcript) {
+              handleUserMessage(transcript)
+            } else {
+              // Fallback to Web Speech API
+              if (recognitionRef.current && !isListening) {
+                recognitionRef.current.start()
+                return
+              }
+            }
+            setIsListening(false)
+          }
+
+          setIsListening(true)
+          mediaRecorder.start()
+
+          // Stop after 10 seconds or when user clicks stop
+          setTimeout(() => {
+            if (mediaRecorder.state === 'recording') {
+              mediaRecorder.stop()
+            }
+          }, 10000)
+
+          // Store mediaRecorder for stopListening
+          ;(window as any).currentMediaRecorder = mediaRecorder
+          return
+        } catch (mediaError) {
+          console.log('MediaRecorder not available, using Web Speech API')
+        }
+      }
+
+      // Fallback to Web Speech API
       if (recognitionRef.current && !isListening) {
         setIsListening(true)
         recognitionRef.current.start()
@@ -285,6 +360,15 @@ export default function ChatBot() {
 
   const stopListening = () => {
     try {
+      // Stop MediaRecorder if using ElevenLabs STT
+      if ((window as any).currentMediaRecorder && (window as any).currentMediaRecorder.state === 'recording') {
+        (window as any).currentMediaRecorder.stop()
+        delete (window as any).currentMediaRecorder
+        setIsListening(false)
+        return
+      }
+
+      // Stop Web Speech API
       if (recognitionRef.current && isListening) {
         try {
           recognitionRef.current.stop()

@@ -1,34 +1,30 @@
 import { NextResponse } from 'next/server'
+import { KNOT_CONFIG } from '@/lib/knot-config'
 
 // Create Knot session for SDK initialization
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     const { external_user_id } = body
-
-    // Knot API credentials (dev environment)
-    const KNOT_CLIENT_ID = 'dda0778d-9486-47f8-bd80-6f2512f9bcdb'
-    const KNOT_SECRET = 'ff5e51b6dcf84a829898d37449cbc47a'
-    const KNOT_SESSION_URL = 'https://development.knotapi.com/session/create'
     
-    // Create Basic Auth header
-    const authString = Buffer.from(`${KNOT_CLIENT_ID}:${KNOT_SECRET}`).toString('base64')
-    
-    const response = await fetch(KNOT_SESSION_URL, {
+    const response = await fetch(KNOT_CONFIG.SESSION_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${authString}`,
+        'Authorization': KNOT_CONFIG.getAuthHeader(),
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         external_user_id: external_user_id || 'farmer-123',
+        type: 'transaction_link', // Required field for Knot API
       }),
     })
 
     if (response.ok) {
       const data = await response.json()
+      // Knot API returns session_id as "session" field
+      const sessionId = data.session || data.session_id || data.data?.session_id || data.id
       return NextResponse.json({
-        session_id: data.session_id,
+        session_id: sessionId,
         success: true,
       })
     } else {

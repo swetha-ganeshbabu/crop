@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { DollarSign, TrendingDown, TrendingUp, ShoppingCart, AlertTriangle, CheckCircle } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { DollarSign, TrendingDown, TrendingUp, ShoppingCart, AlertTriangle, CheckCircle, Link2, Unlink } from 'lucide-react'
 
 interface Transaction {
   id: string
@@ -137,9 +137,212 @@ const calculateAnalysis = (txns: Transaction[]): SpendingAnalysis => {
 export default function SpendingTracker() {
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [analysis, setAnalysis] = useState<SpendingAnalysis | null>(null)
+  const [knotConnected, setKnotConnected] = useState(false)
+  const [knotSessionId, setKnotSessionId] = useState<string | null>(null)
+  const [linkedMerchantId, setLinkedMerchantId] = useState<number | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
+  // Check for existing Knot connection on mount
   useEffect(() => {
-    // Load mock transaction data on mount
+    if (typeof window !== 'undefined') {
+      const storedMerchantId = localStorage.getItem('knot_merchant_id')
+      const storedSessionId = localStorage.getItem('knot_session_id')
+      if (storedMerchantId && storedSessionId) {
+        setKnotConnected(true)
+        setLinkedMerchantId(parseInt(storedMerchantId))
+        setKnotSessionId(storedSessionId)
+        fetchTransactionsWithMerchant(parseInt(storedMerchantId))
+      } else {
+        // Use mock data if not connected
+        setTransactions(mockTransactions)
+        setAnalysis(calculateAnalysis(mockTransactions))
+      }
+    }
+  }, [])
+
+  // Fetch transactions from Knot API
+  const fetchTransactionsWithMerchant = useCallback(async (merchantId: number) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const userEmail = typeof window !== 'undefined' 
+        ? JSON.parse(localStorage.getItem('farmer_user') || '{}').email || 'farmer-123'
+        : 'farmer-123'
+
+      const response = await fetch('/api/knot-transactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          merchant_id: merchantId,
+          external_user_id: userEmail,
+          limit: 50,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const mappedTransactions = data.transactions?.map((txn: any) => ({
+          id: txn.id || txn.external_id || Math.random().toString(),
+          merchant: txn.merchant || 'Unknown Merchant',
+          amount: txn.amount || 0,
+          category: txn.category || categorizeTransaction(txn),
+          date: txn.date || txn.datetime || new Date().toISOString(),
+          sku: txn.sku || txn.sku_data?.sku || txn.sku_data?.products?.[0]?.sku,
+        })) || []
+
+        if (mappedTransactions.length > 0) {
+          setTransactions(mappedTransactions)
+          setAnalysis(calculateAnalysis(mappedTransactions))
+        } else {
+          // Fallback to mock if no transactions
+          setTransactions(mockTransactions)
+          setAnalysis(calculateAnalysis(mockTransactions))
+        }
+      } else {
+        // Fallback to mock data on error
+        setTransactions(mockTransactions)
+        setAnalysis(calculateAnalysis(mockTransactions))
+      }
+    } catch (err) {
+      console.error('Error fetching Knot transactions:', err)
+      setError('Failed to fetch transactions. Using demo data.')
+      setTransactions(mockTransactions)
+      setAnalysis(calculateAnalysis(mockTransactions))
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  // Create Knot session and open SDK
+  const handleConnectKnot = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      const userEmail = typeof window !== 'undefined' 
+        ? JSON.parse(localStorage.getItem('farmer_user') || '{}').email || 'farmer-123'
+        : 'farmer-123'
+
+      // Create session
+      const sessionResponse = await fetch('/api/knot-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ external_user_id: userEmail }),
+      })
+
+      if (!sessionResponse.ok) {
+        throw new Error('Failed to create Knot session')
+      }
+
+      const sessionData = await sessionResponse.json()
+      const sessionId = sessionData.session_id
+
+      if (!sessionId) {
+        throw new Error('No session ID received')
+      }
+
+      setKnotSessionId(sessionId)
+      localStorage.setItem('knot_session_id', sessionId)
+
+      // Dynamically import Knot SDK (client-side only)
+      if (typeof window !== 'undefined') {
+        try {
+          // Import Knot SDK - it exports a default class KnotapiJS
+          const knotModule = await import('knotapi-js')
+          const KnotapiJS = knotModule.default || knotModule
+          
+          if (!KnotapiJS) {
+            console.error('Knot SDK module:', knotModule)
+            throw new Error('Knot SDK not available. Please ensure knotapi-js is installed.')
+          }
+
+          // Verify it's a constructor function
+          if (typeof KnotapiJS !== 'function') {
+            console.error('KnotapiJS is not a constructor:', typeof KnotapiJS, KnotapiJS)
+            throw new Error('Knot SDK is not properly loaded. Expected a class constructor.')
+          }
+
+          // Create instance of KnotapiJS
+          const knot = new KnotapiJS()
+          
+          // Verify the instance has the open method
+          if (!knot || typeof knot.open !== 'function') {
+            console.error('Knot instance:', knot)
+            throw new Error('Knot SDK instance does not have an open method.')
+          }
+          
+          // Import config dynamically to avoid SSR issues
+          const { KNOT_CONFIG } = await import('@/lib/knot-config')
+          
+          console.log('Opening Knot SDK with config:', {
+            sessionId,
+            clientId: KNOT_CONFIG.CLIENT_ID,
+            environment: KNOT_CONFIG.ENVIRONMENT,
+          })
+          
+          // Open Knot SDK modal
+          knot.open({
+            sessionId: sessionId,
+            clientId: KNOT_CONFIG.CLIENT_ID,
+            environment: KNOT_CONFIG.ENVIRONMENT,
+            product: 'transaction_link',
+            onSuccess: (product: string, merchant: string) => {
+              console.log('Knot account linked successfully:', { product, merchant })
+              
+              // The merchant parameter is the merchant_id as a string
+              const merchantId = merchant ? parseInt(merchant, 10) : null
+
+              if (merchantId && !isNaN(merchantId)) {
+                setKnotConnected(true)
+                setLinkedMerchantId(merchantId)
+                localStorage.setItem('knot_merchant_id', merchantId.toString())
+                localStorage.setItem('knot_connected', 'true')
+                
+                // Fetch transactions for linked merchant
+                fetchTransactionsWithMerchant(merchantId)
+              } else {
+                console.warn('No valid merchant_id in Knot response:', merchant)
+                setError('Account linked but merchant ID not found. Using demo data.')
+                setTransactions(mockTransactions)
+                setAnalysis(calculateAnalysis(mockTransactions))
+              }
+              setLoading(false)
+            },
+            onError: (product: string, errorCode: string, message: string, payload: any) => {
+              console.error('Knot SDK error:', { product, errorCode, message, payload })
+              setError(`Failed to link account: ${message || errorCode}. Please try again.`)
+              setLoading(false)
+            },
+            onExit: (product: string) => {
+              console.log('Knot modal closed:', product)
+              setLoading(false)
+            },
+          })
+        } catch (sdkError) {
+          console.error('Knot SDK initialization error:', sdkError)
+          setError(sdkError instanceof Error ? sdkError.message : 'Failed to initialize Knot SDK')
+          setLoading(false)
+        }
+      } else {
+        setError('Knot SDK requires browser environment')
+        setLoading(false)
+      }
+    } catch (err) {
+      console.error('Error connecting Knot:', err)
+      setError(err instanceof Error ? err.message : 'Failed to connect Knot account')
+      setLoading(false)
+    }
+  }, [fetchTransactionsWithMerchant])
+
+  // Disconnect Knot account
+  const handleDisconnectKnot = useCallback(() => {
+    localStorage.removeItem('knot_merchant_id')
+    localStorage.removeItem('knot_session_id')
+    localStorage.removeItem('knot_connected')
+    setKnotConnected(false)
+    setLinkedMerchantId(null)
+    setKnotSessionId(null)
     setTransactions(mockTransactions)
     setAnalysis(calculateAnalysis(mockTransactions))
   }, [])
@@ -164,10 +367,30 @@ export default function SpendingTracker() {
           <p className="text-sm text-gray-600 mt-1">Track expenses and optimize profitability</p>
         </div>
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2 text-gray-600">
-            <ShoppingCart className="h-5 w-5" />
-            <span className="text-sm font-medium">Demo Mode</span>
-          </div>
+          {knotConnected ? (
+            <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 text-green-600">
+                <CheckCircle className="h-5 w-5" />
+                <span className="text-sm font-medium">Account Linked</span>
+              </div>
+              <button
+                onClick={handleDisconnectKnot}
+                className="flex items-center space-x-1 px-3 py-1.5 text-xs bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+              >
+                <Unlink className="h-3 w-3" />
+                <span>Disconnect</span>
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleConnectKnot}
+              disabled={loading}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Link2 className="h-4 w-4" />
+              <span>{loading ? 'Connecting...' : 'Connect Knot Account'}</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -179,11 +402,36 @@ export default function SpendingTracker() {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-800">Powered by Knot Transaction Link API</p>
-            <p className="text-xs text-gray-600">Realistic farmer transaction data with SKU information from agricultural suppliers</p>
-            <p className="text-xs text-blue-600 mt-1 font-medium">📊 Demo data showing typical farm purchases</p>
+            {knotConnected ? (
+              <>
+                <p className="text-xs text-green-600 mt-1 font-medium">✅ Account linked - Real transaction data</p>
+                {linkedMerchantId && (
+                  <p className="text-xs text-gray-600 mt-1">Merchant ID: {linkedMerchantId}</p>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-gray-600">Connect your account to sync real transactions with SKU data</p>
+                <p className="text-xs text-blue-600 mt-1 font-medium">📊 Currently showing demo data</p>
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded-lg">
+          <p className="text-sm text-red-800">{error}</p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="mb-4 p-3 bg-blue-50 border-l-4 border-blue-500 rounded-lg">
+          <p className="text-sm text-blue-800">Loading transactions...</p>
+        </div>
+      )}
 
       {analysis ? (
         <>

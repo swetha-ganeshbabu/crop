@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { KNOT_CONFIG } from '@/lib/knot-config'
 
 // Helper function to categorize transactions based on product names
 function categorizeFromProducts(products: any[]): string {
@@ -30,17 +31,14 @@ export async function POST(request: Request) {
     const { merchant_id, external_user_id, cursor, limit = 10 } = body
 
     // Knot API credentials (dev environment for better data)
-    const KNOT_API_URL = 'https://development.knotapi.com/transactions/sync'
-    const KNOT_CLIENT_ID = 'dda0778d-9486-47f8-bd80-6f2512f9bcdb'
-    const KNOT_SECRET = 'ff5e51b6dcf84a829898d37449cbc47a'
-    const KNOT_AUTH = `Basic ${Buffer.from(`${KNOT_CLIENT_ID}:${KNOT_SECRET}`).toString('base64')}`
+    // Using centralized config from lib/knot-config.ts
 
     // Make actual API call to Knot
     try {
-      const response = await fetch(KNOT_API_URL, {
+      const response = await fetch(KNOT_CONFIG.TRANSACTIONS_URL, {
         method: 'POST',
         headers: {
-          'Authorization': KNOT_AUTH,
+          'Authorization': KNOT_CONFIG.getAuthHeader(),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
